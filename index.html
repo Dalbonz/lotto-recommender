@@ -66,7 +66,7 @@
   .wrap { max-width: 480px; margin: 0 auto; padding-inline: 16px; }
 
   h1.title { font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 2px; }
-  .subtitle { color: var(--text-secondary); font-size: 13.5px; margin-bottom: 18px; }
+  .subtitle { color: var(--text-secondary); font-size: 13.5px; margin-bottom: 2px; }
 
   .segmented {
     display: flex; background: var(--surface-track); border-radius: 10px; padding: 3px; gap: 2px; margin-bottom: 18px;
@@ -96,6 +96,10 @@
     font-family: inherit; font-size: 15px; border: none; background: transparent; color: var(--accent);
     font-weight: 600; text-align: right; -webkit-appearance: none; appearance: none; padding-right: 2px;
   }
+  .select-wrap { display: inline-flex; align-items: center; gap: 3px; }
+  .select-wrap .chevron { font-size: 10px; color: var(--accent); }
+
+  .updated-line { color: var(--text-secondary); font-size: 11.5px; margin: 0 0 18px; }
 
   button.cta {
     width: 100%; font-family: inherit; font-weight: 700; font-size: 16px; padding: 14px 16px;
@@ -126,23 +130,30 @@
   .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; }
   .chart-wrap { position: relative; }
   .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .chart-svg .bar.y { fill: var(--ball-y); } .chart-svg .bar.b { fill: var(--ball-b); } .chart-svg .bar.r { fill: var(--ball-r); }
-  .chart-svg .bar.gy { fill: var(--ball-gy); } .chart-svg .bar.gr { fill: var(--ball-gr); }
   .chart-svg .bar.jo { fill: var(--pension); }
   .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
   .chart-svg .axis-label { font-size: 7.5px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .axis-label-c { font-size: 10px; fill: var(--text-secondary); font-family: inherit; }
   .chart-svg .peak-label, .chart-svg .bar-value { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
+  .chart-svg .area { fill: var(--accent); opacity: .12; }
+  .chart-svg .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart-svg .peak-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }
+  .chart-svg .hit { fill: transparent; pointer-events: all; cursor: pointer; }
   .chart-tooltip {
     position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
     font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; transform: translate(-50%,-100%);
     white-space: nowrap; opacity: 0; transition: opacity .1s ease; top: -6px;
   }
 
-  .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-  .digit-col { background: var(--surface); border-radius: 12px; padding: 10px 4px; text-align: center; }
-  .digit-col .pos { font-size: 10.5px; color: var(--text-secondary); margin-bottom: 6px; }
-  .digit-col .val { font-size: 18px; font-weight: 800; }
-  .digit-col .cnt { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+  .combo-card { display: flex; gap: 12px; background: var(--surface); border-radius: 14px; padding: 14px 10px; }
+  .combo-jo { flex: 0 0 38%; min-width: 0; align-self: center; }
+  .combo-digits { flex: 1; min-width: 0; }
+
+  .digit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .digit-col { background: var(--bg); border-radius: 10px; padding: 7px 3px; text-align: center; }
+  .digit-col .pos { font-size: 9.5px; color: var(--text-secondary); margin-bottom: 3px; }
+  .digit-col .val { font-size: 16px; font-weight: 800; }
+  .digit-col .cnt { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
 
   footer { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; margin-top: 18px; padding-inline: 2px; }
 </style>
@@ -151,6 +162,7 @@
 <div class="wrap">
   <h1 class="title">복권 번호 추천기</h1>
   <div class="subtitle" id="subtitle">데이터 불러오는 중…</div>
+  <div class="updated-line" id="updatedLine"></div>
 
   <div class="segmented" role="tablist">
     <button type="button" class="active" data-tab="lotto">로또 6/45</button>
@@ -162,18 +174,24 @@
     <div class="section-label">번호 추천</div>
     <div class="group">
       <div class="row"><span class="label">방식</span>
-        <select class="plain" id="lottoStrategy">
-          <option value="balanced">균형 조합</option>
-          <option value="weighted">통계 가중 랜덤</option>
-          <option value="random">완전 무작위</option>
-        </select>
+        <span class="select-wrap">
+          <select class="plain" id="lottoStrategy">
+            <option value="balanced">균형 조합</option>
+            <option value="weighted">통계 가중 랜덤</option>
+            <option value="random">완전 무작위</option>
+          </select>
+          <span class="chevron" aria-hidden="true">⌄</span>
+        </span>
       </div>
       <div class="row"><span class="label">세트 수</span>
-        <select class="plain" id="lottoCount">
-          <option value="1">1세트</option>
-          <option value="5" selected>5세트</option>
-          <option value="10">10세트</option>
-        </select>
+        <span class="select-wrap">
+          <select class="plain" id="lottoCount">
+            <option value="1">1세트</option>
+            <option value="5" selected>5세트</option>
+            <option value="10">10세트</option>
+          </select>
+          <span class="chevron" aria-hidden="true">⌄</span>
+        </span>
       </div>
     </div>
     <button class="cta" id="lottoRoll" type="button">다시 뽑기</button>
@@ -181,9 +199,6 @@
 
     <div class="section-label">번호별 출현 횟수 (최근 100회)</div>
     <div class="chart-card" id="lottoHotRecent"></div>
-
-    <div class="section-label">콜드넘버 (최장 미출현)</div>
-    <div class="group" id="lottoCold"></div>
 
     <div class="section-label">참고 통계</div>
     <div class="group">
@@ -197,27 +212,33 @@
     <div class="section-label">번호 추천</div>
     <div class="group">
       <div class="row"><span class="label">방식</span>
-        <select class="plain" id="pensionStrategy">
-          <option value="weighted">통계 가중 랜덤</option>
-          <option value="random">완전 무작위</option>
-        </select>
+        <span class="select-wrap">
+          <select class="plain" id="pensionStrategy">
+            <option value="weighted">통계 가중 랜덤</option>
+            <option value="random">완전 무작위</option>
+          </select>
+          <span class="chevron" aria-hidden="true">⌄</span>
+        </span>
       </div>
       <div class="row"><span class="label">세트 수</span>
-        <select class="plain" id="pensionCount">
-          <option value="1">1세트</option>
-          <option value="5" selected>5세트</option>
-          <option value="10">10세트</option>
-        </select>
+        <span class="select-wrap">
+          <select class="plain" id="pensionCount">
+            <option value="1">1세트</option>
+            <option value="5" selected>5세트</option>
+            <option value="10">10세트</option>
+          </select>
+          <span class="chevron" aria-hidden="true">⌄</span>
+        </span>
       </div>
     </div>
     <button class="cta" id="pensionRoll" type="button">다시 뽑기</button>
     <div class="sets" id="pensionSets"></div>
 
-    <div class="section-label">자리별 최다 출현 숫자</div>
-    <div id="pensionDigitsWrap"><div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div></div>
-
-    <div class="section-label">조(組)별 1등 당첨 횟수</div>
-    <div class="chart-card" id="pensionJoChart"></div>
+    <div class="section-label">조(組)별 1등 당첨 · 자리별 최다 출현 숫자</div>
+    <div class="combo-card">
+      <div class="combo-jo" id="pensionJoChart"></div>
+      <div class="combo-digits" id="pensionDigitsWrap"><div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div></div>
+    </div>
   </section>
 
   <div class="note">
@@ -232,7 +253,7 @@
 </div>
 
 <script>
-const state = { lotto: [], pension: [] };
+const state = { lotto: [], pension: [], updated: {} };
 
 function ballClass(n) {
   if (n <= 10) return 'y'; if (n <= 20) return 'b'; if (n <= 30) return 'r'; if (n <= 40) return 'gy'; return 'gr';
@@ -240,12 +261,12 @@ function ballClass(n) {
 
 /* ---------- 로또 6/45 ---------- */
 function computeLottoStats(draws) {
-  const freq = new Array(46).fill(0), freqRecent = new Array(46).fill(0), lastSeen = new Array(46).fill(0);
+  const freq = new Array(46).fill(0), freqRecent = new Array(46).fill(0);
   const sums = []; let consecCount = 0; const known = new Set();
   const recentStart = Math.max(0, draws.length - 100);
   draws.forEach((d, idx) => {
     known.add(d.numbers.join(','));
-    d.numbers.forEach(n => { freq[n]++; lastSeen[n] = d.round; });
+    d.numbers.forEach(n => { freq[n]++; });
     if (idx >= recentStart) d.numbers.forEach(n => freqRecent[n]++);
     sums.push(d.numbers.reduce((a,b)=>a+b,0));
     const s = [...d.numbers].sort((a,b)=>a-b);
@@ -255,16 +276,21 @@ function computeLottoStats(draws) {
   const lo = sortedSums[Math.floor(sortedSums.length*0.15)] || 0;
   const hi = sortedSums[Math.min(sortedSums.length-1, Math.floor(sortedSums.length*0.85))] || 0;
   const latest = draws[draws.length-1];
-  return { freq, freqRecent, lastSeen, sumLo:lo, sumHi:hi, consecRatio: draws.length? consecCount/draws.length:0,
+  return { freq, freqRecent, sumLo:lo, sumHi:hi, consecRatio: draws.length? consecCount/draws.length:0,
            known, total: draws.length, latestRound: latest?latest.round:0, latestDate: latest?latest.date:'-' };
 }
 
-function coldN(stats, n) { const items=[]; for(let i=1;i<=45;i++) items.push([i, stats.latestRound - stats.lastSeen[i]]); items.sort((a,b)=>b[1]-a[1]); return items.slice(0,n); }
+function circledNum(n) {
+  if (n >= 1 && n <= 20) return String.fromCodePoint(0x2460 + (n - 1));
+  if (n >= 21 && n <= 35) return String.fromCodePoint(0x3251 + (n - 21));
+  if (n >= 36 && n <= 50) return String.fromCodePoint(0x32B1 + (n - 36));
+  return String(n);
+}
 
-function renderNumberBarChart(container, freqArr, ariaLabel) {
-  const W = 440, H = 150, padTop = 16, padBottom = 18, gap = 2;
+function renderNumberLineChart(container, freqArr, ariaLabel) {
+  const W = 440, H = 172, padTop = 18, padBottom = 36, padSide = 3;
   const n = 45;
-  const barW = (W - gap * (n - 1)) / n;
+  const step = (W - padSide * 2) / (n - 1);
   let max = 1, peakIdx = 1;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
@@ -272,29 +298,37 @@ function renderNumberBarChart(container, freqArr, ariaLabel) {
     if (v > (freqArr[peakIdx] || 0)) peakIdx = i;
   }
   const plotH = H - padTop - padBottom;
-  const bars = [];
+  const pts = [];
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
-    const h = Math.max((v / max) * plotH, v > 0 ? 1.5 : 0);
-    const x = (i - 1) * (barW + gap);
-    const y = H - padBottom - h;
-    bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="1.5"/>`);
+    const x = padSide + (i - 1) * step;
+    const y = H - padBottom - (v / max) * plotH;
+    pts.push([x, y]);
   }
-  const ticks = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45].map(i => {
-    const x = (i - 1) * (barW + gap) + barW / 2;
-    return `<text class="axis-label" x="${x.toFixed(2)}" y="${H - 5}" text-anchor="middle">${i}</text>`;
+  const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join(' ');
+  const baseY = (H - padBottom).toFixed(2);
+  const areaPath = `${linePath} L${pts[pts.length - 1][0].toFixed(2)} ${baseY} L${pts[0][0].toFixed(2)} ${baseY} Z`;
+
+  // 45개를 한 줄에 다 넣으면 겹치므로 위/아래 두 줄로 번갈아 배치한다.
+  const ticks = pts.map((p, idx) => {
+    const row = idx % 2 === 0 ? H - 22 : H - 7;
+    return `<text class="axis-label-c" x="${p[0].toFixed(2)}" y="${row}" text-anchor="middle">${circledNum(idx + 1)}</text>`;
   }).join('');
-  const peakH = Math.max(((freqArr[peakIdx] || 0) / max) * plotH, 1.5);
-  const peakX = (peakIdx - 1) * (barW + gap) + barW / 2;
-  const peakY = Math.max(H - padBottom - peakH - 5, 10);
-  const peakLabel = `<text class="peak-label" x="${peakX.toFixed(2)}" y="${peakY.toFixed(2)}" text-anchor="middle">${freqArr[peakIdx] || 0}회</text>`;
+  const hits = pts.map((p, idx) =>
+    `<circle class="hit" data-n="${idx + 1}" data-v="${freqArr[idx + 1] || 0}" cx="${p[0].toFixed(2)}" cy="${p[1].toFixed(2)}" r="7"/>`
+  ).join('');
+  const peakPt = pts[peakIdx - 1];
+  const peakLabel = `<circle class="peak-dot" cx="${peakPt[0].toFixed(2)}" cy="${peakPt[1].toFixed(2)}" r="3"/>
+    <text class="peak-label" x="${peakPt[0].toFixed(2)}" y="${Math.max(peakPt[1] - 8, 10).toFixed(2)}" text-anchor="middle">${freqArr[peakIdx] || 0}회</text>`;
 
   container.innerHTML = `<div class="chart-wrap">
-    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">
-      <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
-      ${bars.join('')}
-      ${ticks}
+    <svg class="chart-svg line-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">
+      <line class="baseline" x1="0" y1="${baseY}" x2="${W}" y2="${baseY}"/>
+      <path class="area" d="${areaPath}"/>
+      <path class="line" d="${linePath}"/>
       ${peakLabel}
+      ${ticks}
+      ${hits}
     </svg>
     <div class="chart-tooltip"></div>
   </div>`;
@@ -302,28 +336,22 @@ function renderNumberBarChart(container, freqArr, ariaLabel) {
   const tip = container.querySelector('.chart-tooltip');
   const wrap = container.querySelector('.chart-wrap');
   const hideTip = () => { tip.style.opacity = '0'; };
-  container.querySelectorAll('.bar').forEach(rect => {
+  container.querySelectorAll('.hit').forEach(hit => {
     const showTip = () => {
-      const num = rect.getAttribute('data-n'), v = rect.getAttribute('data-v');
+      const num = hit.getAttribute('data-n'), v = hit.getAttribute('data-v');
       tip.textContent = `${num}번 · ${v}회`;
       const wrapRect = wrap.getBoundingClientRect();
-      const barRect = rect.getBoundingClientRect();
-      tip.style.left = (barRect.left - wrapRect.left + barRect.width / 2) + 'px';
-      tip.style.top = (barRect.top - wrapRect.top) + 'px';
+      const hitRect = hit.getBoundingClientRect();
+      tip.style.left = (hitRect.left - wrapRect.left + hitRect.width / 2) + 'px';
+      tip.style.top = (hitRect.top - wrapRect.top) + 'px';
       tip.style.opacity = '1';
     };
-    rect.addEventListener('pointerenter', showTip);
-    rect.addEventListener('pointermove', showTip);
-    rect.addEventListener('pointerleave', hideTip);
-    rect.addEventListener('click', showTip);
+    hit.addEventListener('pointerenter', showTip);
+    hit.addEventListener('pointermove', showTip);
+    hit.addEventListener('pointerleave', hideTip);
+    hit.addEventListener('click', showTip);
   });
   wrap.addEventListener('pointerleave', hideTip);
-}
-
-function renderBallRow(container, list, suffix) {
-  container.innerHTML = list.map(([n,c]) => `
-    <div class="row"><span class="label"><span class="ball ${ballClass(n)}" style="display:inline-flex;vertical-align:middle;margin-right:8px;">${n}</span></span>
-    <span class="value">${c}${suffix}</span></div>`).join('');
 }
 
 function weightedSample45(weights) {
@@ -386,11 +414,7 @@ function rollLotto(){
 
 function renderLottoStats(){
   const stats = computeLottoStats(state.lotto);
-  document.getElementById('subtitle').textContent = state.lotto.length
-    ? `로또 최신 ${stats.latestRound}회(${stats.latestDate}) 분석 · 매주 목·토 자동 업데이트`
-    : '데이터 없음';
-  renderNumberBarChart(document.getElementById('lottoHotRecent'), stats.freqRecent, '최근 100회 번호별 출현 횟수');
-  renderBallRow(document.getElementById('lottoCold'), coldN(stats,10), '회차 전');
+  renderNumberLineChart(document.getElementById('lottoHotRecent'), stats.freqRecent, '최근 100회 번호별 출현 횟수');
   document.getElementById('lottoSumRange').textContent = stats.total ? `${stats.sumLo} ~ ${stats.sumHi}` : '-';
   document.getElementById('lottoConsec').textContent = stats.total ? (stats.consecRatio*100).toFixed(1)+'%' : '-';
 }
@@ -461,7 +485,7 @@ function rollPension(){
 }
 
 function renderJoBarChart(container, joFreq){
-  const W = 300, H = 120, padTop = 22, padBottom = 20, gap = 14;
+  const W = 150, H = 175, padTop = 20, padBottom = 22, gap = 8;
   const vals = [1,2,3,4,5].map(j => joFreq[j] || 0);
   const chartMax = Math.max(1, ...vals);
   const barW = (W - gap * 4) / 5;
@@ -498,7 +522,34 @@ function renderPensionStats(){
   renderJoBarChart(joChart, stats.joFreq);
 }
 
-/* ---------- 탭 전환 ---------- */
+/* ---------- 탭 전환 / 상단 요약 ---------- */
+function formatKST(iso){
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d)) return null;
+  const kst = new Date(d.getTime() + 9*60*60*1000);
+  const pad = x => String(x).padStart(2,'0');
+  return `${kst.getUTCFullYear()}-${pad(kst.getUTCMonth()+1)}-${pad(kst.getUTCDate())} ${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())}`;
+}
+
+function updateHeader(tab){
+  const subtitle = document.getElementById('subtitle');
+  const updatedLine = document.getElementById('updatedLine');
+  if (tab === 'lotto'){
+    subtitle.textContent = state.lotto.length
+      ? `로또 최신 ${computeLottoStats(state.lotto).latestRound}회(${computeLottoStats(state.lotto).latestDate}) 분석 · 매주 목·토 자동 업데이트`
+      : '데이터 없음';
+    const t = formatKST(state.updated.lotto645);
+    updatedLine.textContent = t ? `마지막 업데이트 확인: ${t} (KST)` : '';
+  } else {
+    subtitle.textContent = state.pension.length
+      ? `연금복권 최신 ${computePensionStats(state.pension).latestRound}회(${computePensionStats(state.pension).latestDate}) 분석 · 매주 목·토 자동 업데이트`
+      : '연금복권720+ 데이터 수집 대기 중';
+    const t = formatKST(state.updated.pension720);
+    updatedLine.textContent = t ? `마지막 업데이트 확인: ${t} (KST)` : '';
+  }
+}
+
 document.querySelectorAll('.segmented [data-tab]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.segmented [data-tab]').forEach(b=>b.classList.remove('active'));
@@ -506,9 +557,7 @@ document.querySelectorAll('.segmented [data-tab]').forEach(btn=>{
     const tab = btn.getAttribute('data-tab');
     document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
     document.getElementById('tab-'+tab).classList.add('active');
-    document.getElementById('subtitle').textContent = tab==='lotto'
-      ? (state.lotto.length ? `로또 최신 ${computeLottoStats(state.lotto).latestRound}회(${computeLottoStats(state.lotto).latestDate}) 분석 · 매주 목·토 자동 업데이트` : '데이터 없음')
-      : (state.pension.length ? `연금복권 최신 ${computePensionStats(state.pension).latestRound}회(${computePensionStats(state.pension).latestDate}) 분석 · 매주 목·토 자동 업데이트` : '연금복권720+ 데이터 수집 대기 중');
+    updateHeader(tab);
   });
 });
 
@@ -516,18 +565,22 @@ document.getElementById('lottoRoll').addEventListener('click', rollLotto);
 document.getElementById('pensionRoll').addEventListener('click', rollPension);
 
 async function boot(){
-  // 두 데이터 요청을 서로 독립적으로 처리 — 하나가 실패해도 다른 하나(와 추천 번호 생성)는
+  // 데이터 요청을 서로 독립적으로 처리 — 하나가 실패해도 다른 것(과 추천 번호 생성)은
   // 항상 정상 동작해야 한다("다시 뽑기"를 누르지 않아도 무조건 5게임이 떠야 함).
   await Promise.all([
     fetch('data/lotto645.json').then(r=>r.json()).then(d=>{ state.lotto = d; })
       .catch(e=>console.error('로또 데이터 로딩 실패', e)),
     fetch('data/pension720.json').then(r=>r.json()).then(d=>{ state.pension = d; })
       .catch(e=>console.error('연금복권 데이터 로딩 실패', e)),
+    fetch('data/updated.json').then(r=>r.json()).then(d=>{ state.updated = d; })
+      .catch(e=>console.error('업데이트 시각 로딩 실패', e)),
   ]);
   try { renderLottoStats(); } catch(e){ console.error('로또 통계 렌더 실패', e); }
   try { renderPensionStats(); } catch(e){ console.error('연금복권 통계 렌더 실패', e); }
   try { rollLotto(); } catch(e){ console.error('로또 추천 생성 실패', e); }
   try { rollPension(); } catch(e){ console.error('연금복권 추천 생성 실패', e); }
+  try { updateHeader(document.querySelector('.segmented .active').getAttribute('data-tab')); }
+  catch(e){ console.error('헤더 갱신 실패', e); }
 }
 boot();
 

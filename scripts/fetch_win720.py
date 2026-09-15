@@ -20,10 +20,23 @@
 import json
 import sys
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "pension720.json"
+META_PATH = Path(__file__).resolve().parent.parent / "data" / "updated.json"
 API_URL = "https://www.dhlottery.co.kr/pt720/selectPstPt720WnList.do"
+
+
+def touch_updated(key: str):
+    meta = {}
+    if META_PATH.exists():
+        try:
+            meta = json.loads(META_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            meta = {}
+    meta[key] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    META_PATH.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
 
 
 def fetch_all_rounds() -> list[dict]:
@@ -69,6 +82,9 @@ def main():
     except Exception as e:
         print(f"[win720] API 조회 실패, 건너뜀: {e}", file=sys.stderr)
         return
+
+    # API 조회 자체는 성공했으므로 "마지막 확인 시각"을 갱신한다.
+    touch_updated("pension720")
 
     new_rows = [r for r in all_rounds if r["round"] > last_round]
     if not new_rows:

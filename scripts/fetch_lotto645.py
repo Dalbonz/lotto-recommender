@@ -7,10 +7,23 @@ import json
 import sys
 import time
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "lotto645.json"
+META_PATH = Path(__file__).resolve().parent.parent / "data" / "updated.json"
 API_URL = "https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}"
+
+
+def touch_updated(key: str):
+    meta = {}
+    if META_PATH.exists():
+        try:
+            meta = json.loads(META_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            meta = {}
+    meta[key] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    META_PATH.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
 
 
 def load_existing() -> list:
@@ -68,6 +81,9 @@ def main():
         print(f"[lotto645] {len(new_rows)}개 회차 추가 저장 (최신 {existing[-1]['round']}회)")
     else:
         print("[lotto645] 새 회차 없음 (이미 최신)")
+
+    # 새 회차가 없어도 API 조회 자체는 성공했으므로 "마지막 확인 시각"을 갱신한다.
+    touch_updated("lotto645")
 
 
 if __name__ == "__main__":
