@@ -95,11 +95,11 @@
   .row .value { font-size: 15px; font-weight: 600; color: var(--text-secondary); text-align: right; }
 
   select.plain {
-    font-family: inherit; font-size: 15px; border: none; background: transparent; color: var(--accent);
+    font-family: inherit; font-size: 15px; border: none; background: transparent; color: var(--text);
     font-weight: 600; text-align: right; -webkit-appearance: none; appearance: none; padding-right: 2px;
   }
-  .select-wrap { display: inline-flex; align-items: center; gap: 3px; }
-  .select-wrap .chevron { color: var(--accent); flex-shrink: 0; }
+  .select-wrap { display: inline-flex; align-items: center; gap: 4px; }
+  .select-wrap .chevron { color: var(--text); flex-shrink: 0; }
 
   .updated-line { color: var(--text-secondary); font-size: 11.5px; margin: 0 0 18px; }
 
@@ -112,15 +112,14 @@
   .sets { display: flex; flex-direction: column; gap: 10px; }
   .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; }
   .set-idx { font-size: 12px; color: var(--text-secondary); width: 14px; flex-shrink: 0; font-weight: 600; }
-  .balls { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .balls { display: flex; justify-content: space-evenly; gap: 6px; flex-wrap: wrap; flex: 1; }
   .ball { width: 29px; height: 29px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12.5px; color: white; flex-shrink: 0; }
   .ball.y { background: var(--ball-y); } .ball.b { background: var(--ball-b); } .ball.r { background: var(--ball-r); }
   .ball.gy { background: var(--ball-gy); } .ball.gr { background: var(--ball-gr); }
 
-  .pension-set { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .pension-set { display: flex; justify-content: space-evenly; align-items: center; gap: 4px; flex: 1; flex-wrap: wrap; }
   .jo-badge { background: var(--pension); color: white; font-weight: 700; font-size: 12.5px; padding: 5px 9px; border-radius: 8px; flex-shrink: 0; }
-  .digits { display: flex; gap: 3px; }
-  .digit { width: 22px; height: 27px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .digit { width: 22px; height: 27px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
 
   .icon-btn { border: none; background: transparent; color: var(--text-secondary); font-size: 16px; width: 28px; height: 28px; cursor: pointer; flex-shrink: 0; }
   .icon-btn.copied { color: var(--ball-gr); }
@@ -136,8 +135,8 @@
   .chart-svg .bar.gy { fill: var(--ball-gy); } .chart-svg .bar.gr { fill: var(--ball-gr); }
   .chart-svg .bar.jo { fill: var(--pension); }
   .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
-  .chart-svg .axis-label { font-size: 7.5px; fill: var(--text-secondary); font-family: inherit; }
-  .chart-svg .axis-label-n { font-size: 7px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .axis-label { font-size: 15px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .axis-label-n { font-size: 15px; fill: var(--text-secondary); font-family: inherit; }
   .chart-svg .peak-label, .chart-svg .bar-value { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
   .chart-tooltip {
     position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
@@ -151,10 +150,10 @@
   .combo-digits { flex: 1; min-width: 0; }
 
   .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; height: 100%; }
-  .digit-col { background: var(--bg); border-radius: 9px; padding: 6px 1px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-  .digit-col .pos { font-size: 8px; color: var(--text-secondary); margin-bottom: 2px; }
-  .digit-col .val { font-size: 14px; font-weight: 800; }
-  .digit-col .cnt { font-size: 7.5px; color: var(--text-secondary); margin-top: 1px; }
+  .digit-col { background: var(--bg); border-radius: 9px; padding: 8px 1px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+  .digit-col .pos { font-size: 16px; color: var(--text-secondary); margin-bottom: 3px; }
+  .digit-col .val { font-size: 26px; font-weight: 800; }
+  .digit-col .cnt { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
 
   footer { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; margin-top: 18px; padding-inline: 2px; }
 </style>
@@ -181,7 +180,7 @@
             <option value="weighted">통계 가중 랜덤</option>
             <option value="random">완전 무작위</option>
           </select>
-          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="chevron" width="17" height="17" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
       <div class="row"><span class="label">세트 수</span>
@@ -191,7 +190,7 @@
             <option value="5" selected>5세트</option>
             <option value="10">10세트</option>
           </select>
-          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="chevron" width="17" height="17" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
     </div>
@@ -218,7 +217,7 @@
             <option value="weighted">통계 가중 랜덤</option>
             <option value="random">완전 무작위</option>
           </select>
-          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="chevron" width="17" height="17" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
       <div class="row"><span class="label">세트 수</span>
@@ -228,7 +227,7 @@
             <option value="5" selected>5세트</option>
             <option value="10">10세트</option>
           </select>
-          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="chevron" width="17" height="17" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
     </div>
@@ -282,10 +281,10 @@ function computeLottoStats(draws) {
 }
 
 function renderNumberBarChart(container, freqArr, ariaLabel) {
-  // 가는 막대 + 넉넉한 간격으로 선처럼 보이게 하되, 실제로는 번호별 막대그래프다.
-  const W = 440, H = 172, padTop = 18, padBottom = 20, gap = 5.5;
+  // 막대는 선 수준으로 가늘게, x축 숫자는 사선 배치로 크게 키운다.
+  const W = 440, H = 210, padTop = 18, padBottom = 58, barW = 1.6;
   const n = 45;
-  const barW = (W - gap * (n - 1)) / n;
+  const gap = (W - n * barW) / (n - 1);
   let max = 1, peakIdx = 1;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
@@ -295,14 +294,15 @@ function renderNumberBarChart(container, freqArr, ariaLabel) {
   const plotH = H - padTop - padBottom;
   const bars = [];
   const labels = [];
+  const labelY = H - padBottom + 6;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
     const h = Math.max((v / max) * plotH, v > 0 ? 1.5 : 0);
     const x = (i - 1) * (barW + gap);
     const y = H - padBottom - h;
     const cx = x + barW / 2;
-    bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="1"/>`);
-    labels.push(`<text class="axis-label-n" x="${cx.toFixed(2)}" y="${H - 6}" text-anchor="middle">${i}</text>`);
+    bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="0.8"/>`);
+    labels.push(`<text class="axis-label-n" x="${cx.toFixed(2)}" y="${labelY.toFixed(2)}" text-anchor="end" transform="rotate(-60 ${cx.toFixed(2)} ${labelY.toFixed(2)})">${i}</text>`);
   }
   const peakX = (peakIdx - 1) * (barW + gap) + barW / 2;
   const peakH = Math.max(((freqArr[peakIdx] || 0) / max) * plotH, 1.5);
@@ -454,7 +454,7 @@ function renderPensionSets(sets){
     <div class="set-row"><div class="set-idx">${i+1}.</div>
       <div class="pension-set">
         <span class="jo-badge">${set.jo}조</span>
-        <div class="digits">${set.number.split('').map(d=>`<span class="digit">${d}</span>`).join('')}</div>
+        ${set.number.split('').map(d=>`<span class="digit">${d}</span>`).join('')}
       </div>
       <button class="icon-btn" type="button" data-copy="${set.jo}조 ${set.number}">⧉</button>
     </div>`).join('');
@@ -487,7 +487,7 @@ function renderJoBarChart(container, joFreq){
     const y = H - padBottom - h;
     parts.push(`<rect class="bar jo" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1"/>`);
     parts.push(`<text class="bar-value" x="${cx.toFixed(1)}" y="${Math.max(y - 4, 9).toFixed(1)}" text-anchor="middle">${v}</text>`);
-    parts.push(`<text class="axis-label" x="${cx.toFixed(1)}" y="${H - 2}" text-anchor="middle">${j}조</text>`);
+    parts.push(`<text class="axis-label" x="${cx.toFixed(1)}" y="${H - 2}" text-anchor="middle">${j}</text>`);
   }
   container.innerHTML = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="조별 1등 당첨 횟수">
     <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
