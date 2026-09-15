@@ -8,9 +8,9 @@
 ## 프로젝트가 뭔지
 
 로또 6/45 + 연금복권720+ 당첨번호를 분석해서 번호를 추천하는 정적 웹앱.
-- GitHub Actions가 매일 자동으로 최신 당첨번호를 수집
+- GitHub Actions가 매주 목요일(연금복권 추첨 직후)·토요일(로또 추첨 직후) 자동으로 최신 당첨번호를 수집
 - GitHub Pages로 무료 배포 (`https://dalbonz.github.io/lotto-recommender/`)
-- 설치 없이 브라우저로 여는 PWA (홈 화면 추가 가능)
+- 설치 없이 브라우저로 여는 PWA (홈 화면 추가 가능, 아이콘은 One UI 스타일 커스텀 L 마크)
 
 **중요한 전제(항상 사용자에게 고지)**: 복권은 매회 독립 무작위 추첨이라 과거 데이터가
 다음 회차 확률에 영향을 주지 않는다. 추천 기능은 재미/참고용이지 확률을 높이지 않는다.
@@ -29,43 +29,64 @@
    연쇄 실행 안 시키는 GitHub 정책 때문에, 데이터 업데이트가 성공해도 사이트가 재배포 안
    되는 문제가 있었음 → `update-data.yml`이 데이터 커밋 후 자체적으로 Pages 배포까지
    하도록 수정함 (커밋 `c50595f`)
-8. **여기서 인계됨**: 수정된 워크플로우를 아직 실제로 수동 실행(Run workflow)해서
-   검증하지 못한 상태. 이게 다음 세션이 먼저 확인해야 할 일.
+8. Codespace에서 워크플로우를 수동 실행해 검증 완료(`lotto645`/`win720` 둘 다 정상,
+   로그로 확인). 이후 Codespace 세션에서 이어서 작업:
+9. UI: 과거 통계 섹션을 `<details>`로 접어서 기본 숨김(사용자가 "핫넘버가 무슨 의미인지
+   모르겠다"고 지적) + 업데이트 주기를 매일 → 목/토 추첨 직후 2회로 변경
+   (`.github/workflows/update-data.yml` cron 2개로 분리)
+10. 앱 아이콘을 커스텀 디자인으로 교체 (cairosvg로 생성): 처음엔 블루+골드 L, 이후
+    사용자 요청으로 삼성 One UI 9.x 스타일(짙은 주황 배경 + Inter Black 폰트로 그린
+    14도 기울인 골드 L + 그린 도트, 스퀴클 코너 radius 확대)로 최종 확정
+11. 서비스워커 버그 발견 및 수정: `fetch` 응답을 `res.ok` 체크 없이 캐시해서, 배포 직후
+    CDN 전파 과정에서 일시적 에러 응답을 받으면 그게 영구히 캐시되는 문제가 있었음 →
+    `res.ok`일 때만 캐시하도록 고치고 캐시 버전 올림(`sw.js`)
+12. 로또 핫넘버를 top-10 리스트에서 1~45번 전체를 보여주는 막대그래프(SVG, 가로축
+    번호·세로축 출현횟수, 번호대별 볼 색상 재사용, 탭하면 툴팁)로 교체
+13. **연금복권720+ 데이터가 하나도 안 쌓이던 근본 원인을 찾아 고침** — 두 가지 문제가
+    겹쳐 있었음:
+    - 예전 URL(`gameResult.do?method=win720`)이 죽어있었다. 동행복권이 결과 페이지를
+      SPA로 바꾸면서 그 URL은 빈 페이지 껍데기만 반환 → 정규식이 항상 0개 매칭
+      (Actions 로그: "조 번호 5개를 모두 찾지 못함 (찾은 개수: 0)")
+    - **데이터 모델 자체가 잘못 설계돼 있었다.** "5개 조가 각각 당첨번호를 가진다"가
+      아니라, 회차마다 1등은 특정 조(1~5) 하나 + 6자리 번호 하나뿐이고 보너스 번호가
+      조 상관없이 별도로 하나 더 있는 구조다.
+    - 해결: SPA가 내부적으로 쓰는 비공식 JSON API(`/pt720/selectPstPt720WnList.do`,
+      키 불필요, 1회 요청으로 1회차~최신회차 전체 이력 반환)를 직접 호출하도록
+      `fetch_win720.py`를 다시 씀. `data/pension720.json` 스키마를 `groups:[5개]`에서
+      `group`/`number`/`bonusNumber`로 변경, `index.html`의 통계 계산도 맞춰 고침.
+    - **검증 완료**: Codespace에서 직접 실행해 1~332회 전체 백필 성공, 이후 사용자가
+      Actions 탭에서 수동 실행 → 로그에 에러 없이 "새로 저장된 회차 없음"만 찍힘
+      (= 실제 GitHub Actions 네트워크에서도 API 호출 성공 확인됨)
 
 ## 구조
 
 ```
 index.html                     # 메인 앱 (Apple 스타일, 로또/연금복권 세그먼트 탭)
-manifest.json, sw.js, icons/   # PWA
+manifest.json, sw.js, icons/   # PWA (아이콘은 One UI 스타일 커스텀 L 마크)
 data/lotto645.json             # 로또 1~1204회 시드 데이터 포함 (2025-12-27 기준)
-data/pension720.json           # 빈 배열 []  — 첫 자동 업데이트 실행 시 1회부터 백필됨
+data/pension720.json           # 연금복권 1~332회 백필 완료. 항목: round/date/group(1~5)/number(6자리)/bonusNumber(6자리)
 scripts/fetch_lotto645.py      # 동행복권 공식 공개 JSON API 사용 (키 불필요, 검증된 방식)
-scripts/fetch_win720.py        # 공식 API 없음 → 결과 페이지 HTML 텍스트 패턴 파싱 (추정 기반, 미검증)
-.github/workflows/update-data.yml   # 매일 UTC13:00(KST22:00) + 수동실행. 데이터 수집 후 자체 배포까지 함
+scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.do) 사용, 검증 완료(Actions 로그 확인)
+.github/workflows/update-data.yml   # 목 19:00 KST + 토 21:00 KST(각 추첨 직후) + 수동실행. 데이터 수집 후 자체 배포까지 함
 .github/workflows/deploy-pages.yml  # main에 push되면 배포 (코드만 바뀔 때용, 데이터 워크플로우와 중복 가능)
 ```
 
 ## 알려진 리스크 / 정직하게 밝혀둘 것
 
-- **`fetch_win720.py`는 눈으로 실제 페이지를 보고 검증하지 못한 채 작성됨.** 이전 세션이
-  작업한 샌드박스 환경은 dhlottery.co.kr 접속 자체가 네트워크 정책으로 차단되어 있어서,
-  실제 HTML 구조를 확인할 방법이 없었다. Codespace는 일반 인터넷 접속이 되니, 여기서
-  `python3 scripts/fetch_win720.py`를 직접 돌려보고 실패하면 그 자리에서 실제 구조를
-  보고 고칠 수 있다 — 이게 우선순위 높은 작업.
-- `fetch_lotto645.py`가 쓰는 API(`common.do?method=getLottoNumber`)는 커뮤니티에 널리
-  검증된 공개 엔드포인트이지만, 이 프로젝트에서 GitHub Actions 러너로 실제 호출 성공한
-  걸 직접 로그로 확인한 적은 아직 없다(위 7번 버그 수정 이후 재실행 대기 중).
-- dhlottery가 클라우드/데이터센터 IP 대역(GitHub Actions 러너 등)을 차단할 가능성은
-  낮지만 아직 배제 못함 — 실패하면 이것도 원인 후보.
+- `fetch_lotto645.py`가 쓰는 API(`common.do?method=getLottoNumber`)와
+  `fetch_win720.py`가 쓰는 API(`/pt720/selectPstPt720WnList.do`) 둘 다 실제 GitHub
+  Actions 러너에서 호출 성공을 로그로 확인함(2026-09-15). 다만 두 API 모두 동행복권이
+  공식 문서화한 게 아니라 사이트가 내부적으로 쓰는 엔드포인트를 그대로 가져다 쓰는
+  것이므로, 동행복권이 API를 바꾸면 예고 없이 깨질 수 있다 — 실패하면 Actions 로그의
+  `[lotto645]`/`[win720]` 태그부터 확인할 것.
+- **Codespace 자체 네트워크가 dhlottery.co.kr에 간헐적으로 타임아웃 나는 걸 관찰함**
+  (curl/urllib/헤드리스 브라우저 전부 겪음, 재시도하면 성공하기도 함). GitHub Actions
+  러너는 다른 네트워크라 이 문제와 무관한 걸로 보이지만(실제 Actions 로그에서는
+  에러 없이 성공함), Codespace에서 스크립트를 직접 테스트할 때 타임아웃이 나도
+  당황하지 말고 재시도해볼 것 — 코드 버그가 아닐 수 있다.
 - GitHub Actions의 스케줄 cron은 정시 보장이 아니라 몇십 분~몇 시간 지연 가능.
 
-## 다음에 할 일 (우선순위)
+## 다음에 할 일
 
-1. Actions 탭에서 "당첨번호 자동 업데이트" 워크플로우를 수동 실행(Run workflow)하고 로그 확인
-2. `[lotto645]` 로그에서 1204회 이후 새 회차가 실제로 잡히는지 확인
-3. `[win720]` 로그 확인 — 실패하면 Codespace 터미널에서 직접
-   `curl -s "https://www.dhlottery.co.kr/gameResult.do?method=win720&drwNo=1"` 등으로
-   실제 페이지를 보고 `scripts/fetch_win720.py`의 정규식(`GROUP_NUM_RE` 등)을 실제 구조에
-   맞게 고칠 것
-4. 사이트(`https://dalbonz.github.io/lotto-recommender/`)에서 최신 회차와 연금복권 통계가
-   실제로 채워지는지 확인
+우선순위 높은 미해결 항목 없음 — 위 8~13번 항목으로 이전 세션이 남긴 할 일은 모두
+검증 완료됨. 앞으로 추가 요청이 있으면 그때 착수.
