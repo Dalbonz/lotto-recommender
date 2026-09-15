@@ -110,12 +110,12 @@
   .sets { display: flex; flex-direction: column; gap: 10px; }
   .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; }
   .set-idx { font-size: 12px; color: var(--text-secondary); width: 14px; flex-shrink: 0; font-weight: 600; }
-  .balls { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .balls { display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; flex: 1; }
   .ball { width: 29px; height: 29px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12.5px; color: white; flex-shrink: 0; }
   .ball.y { background: var(--ball-y); } .ball.b { background: var(--ball-b); } .ball.r { background: var(--ball-r); }
   .ball.gy { background: var(--ball-gy); } .ball.gr { background: var(--ball-gr); }
 
-  .pension-set { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .pension-set { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
   .jo-badge { background: var(--pension); color: white; font-weight: 700; font-size: 12.5px; padding: 5px 9px; border-radius: 8px; flex-shrink: 0; }
   .digits { display: flex; gap: 3px; }
   .digit { width: 22px; height: 27px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
@@ -128,32 +128,31 @@
   .empty-note { font-size: 13px; color: var(--text-secondary); padding: 14px 16px; background: var(--surface); border-radius: 14px; line-height: 1.6; }
 
   .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; }
-  .chart-wrap { position: relative; }
+  .chart-wrap { position: relative; height: 100%; }
   .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart-svg .bar.y { fill: var(--ball-y); } .chart-svg .bar.b { fill: var(--ball-b); } .chart-svg .bar.r { fill: var(--ball-r); }
+  .chart-svg .bar.gy { fill: var(--ball-gy); } .chart-svg .bar.gr { fill: var(--ball-gr); }
   .chart-svg .bar.jo { fill: var(--pension); }
   .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
   .chart-svg .axis-label { font-size: 7.5px; fill: var(--text-secondary); font-family: inherit; }
-  .chart-svg .axis-label-c { font-size: 10px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .axis-label-n { font-size: 7px; fill: var(--text-secondary); font-family: inherit; }
   .chart-svg .peak-label, .chart-svg .bar-value { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
-  .chart-svg .area { fill: var(--accent); opacity: .12; }
-  .chart-svg .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  .chart-svg .peak-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }
-  .chart-svg .hit { fill: transparent; pointer-events: all; cursor: pointer; }
   .chart-tooltip {
     position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
     font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; transform: translate(-50%,-100%);
     white-space: nowrap; opacity: 0; transition: opacity .1s ease; top: -6px;
   }
 
-  .combo-card { display: flex; gap: 12px; background: var(--surface); border-radius: 14px; padding: 14px 10px; }
-  .combo-jo { flex: 0 0 38%; min-width: 0; align-self: center; }
+  .combo-card { display: flex; gap: 10px; background: var(--surface); border-radius: 14px; padding: 12px 10px; align-items: stretch; }
+  .combo-jo { flex: 0 0 22%; min-width: 0; }
+  .combo-jo .chart-svg { height: 100%; }
   .combo-digits { flex: 1; min-width: 0; }
 
-  .digit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .digit-col { background: var(--bg); border-radius: 10px; padding: 7px 3px; text-align: center; }
-  .digit-col .pos { font-size: 9.5px; color: var(--text-secondary); margin-bottom: 3px; }
-  .digit-col .val { font-size: 16px; font-weight: 800; }
-  .digit-col .cnt { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
+  .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; height: 100%; }
+  .digit-col { background: var(--bg); border-radius: 9px; padding: 6px 1px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+  .digit-col .pos { font-size: 8px; color: var(--text-secondary); margin-bottom: 2px; }
+  .digit-col .val { font-size: 14px; font-weight: 800; }
+  .digit-col .cnt { font-size: 7.5px; color: var(--text-secondary); margin-top: 1px; }
 
   footer { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; margin-top: 18px; padding-inline: 2px; }
 </style>
@@ -280,17 +279,11 @@ function computeLottoStats(draws) {
            known, total: draws.length, latestRound: latest?latest.round:0, latestDate: latest?latest.date:'-' };
 }
 
-function circledNum(n) {
-  if (n >= 1 && n <= 20) return String.fromCodePoint(0x2460 + (n - 1));
-  if (n >= 21 && n <= 35) return String.fromCodePoint(0x3251 + (n - 21));
-  if (n >= 36 && n <= 50) return String.fromCodePoint(0x32B1 + (n - 36));
-  return String(n);
-}
-
-function renderNumberLineChart(container, freqArr, ariaLabel) {
-  const W = 440, H = 172, padTop = 18, padBottom = 36, padSide = 3;
+function renderNumberBarChart(container, freqArr, ariaLabel) {
+  // 가는 막대 + 넉넉한 간격으로 선처럼 보이게 하되, 실제로는 번호별 막대그래프다.
+  const W = 440, H = 172, padTop = 18, padBottom = 20, gap = 5.5;
   const n = 45;
-  const step = (W - padSide * 2) / (n - 1);
+  const barW = (W - gap * (n - 1)) / n;
   let max = 1, peakIdx = 1;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
@@ -298,37 +291,28 @@ function renderNumberLineChart(container, freqArr, ariaLabel) {
     if (v > (freqArr[peakIdx] || 0)) peakIdx = i;
   }
   const plotH = H - padTop - padBottom;
-  const pts = [];
+  const bars = [];
+  const labels = [];
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
-    const x = padSide + (i - 1) * step;
-    const y = H - padBottom - (v / max) * plotH;
-    pts.push([x, y]);
+    const h = Math.max((v / max) * plotH, v > 0 ? 1.5 : 0);
+    const x = (i - 1) * (barW + gap);
+    const y = H - padBottom - h;
+    const cx = x + barW / 2;
+    bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="1"/>`);
+    labels.push(`<text class="axis-label-n" x="${cx.toFixed(2)}" y="${H - 6}" text-anchor="middle">${i}</text>`);
   }
-  const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(2) + ' ' + p[1].toFixed(2)).join(' ');
-  const baseY = (H - padBottom).toFixed(2);
-  const areaPath = `${linePath} L${pts[pts.length - 1][0].toFixed(2)} ${baseY} L${pts[0][0].toFixed(2)} ${baseY} Z`;
-
-  // 45개를 한 줄에 다 넣으면 겹치므로 위/아래 두 줄로 번갈아 배치한다.
-  const ticks = pts.map((p, idx) => {
-    const row = idx % 2 === 0 ? H - 22 : H - 7;
-    return `<text class="axis-label-c" x="${p[0].toFixed(2)}" y="${row}" text-anchor="middle">${circledNum(idx + 1)}</text>`;
-  }).join('');
-  const hits = pts.map((p, idx) =>
-    `<circle class="hit" data-n="${idx + 1}" data-v="${freqArr[idx + 1] || 0}" cx="${p[0].toFixed(2)}" cy="${p[1].toFixed(2)}" r="7"/>`
-  ).join('');
-  const peakPt = pts[peakIdx - 1];
-  const peakLabel = `<circle class="peak-dot" cx="${peakPt[0].toFixed(2)}" cy="${peakPt[1].toFixed(2)}" r="3"/>
-    <text class="peak-label" x="${peakPt[0].toFixed(2)}" y="${Math.max(peakPt[1] - 8, 10).toFixed(2)}" text-anchor="middle">${freqArr[peakIdx] || 0}회</text>`;
+  const peakX = (peakIdx - 1) * (barW + gap) + barW / 2;
+  const peakH = Math.max(((freqArr[peakIdx] || 0) / max) * plotH, 1.5);
+  const peakY = Math.max(H - padBottom - peakH - 6, 10);
+  const peakLabel = `<text class="peak-label" x="${peakX.toFixed(2)}" y="${peakY.toFixed(2)}" text-anchor="middle">${freqArr[peakIdx] || 0}회</text>`;
 
   container.innerHTML = `<div class="chart-wrap">
-    <svg class="chart-svg line-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">
-      <line class="baseline" x1="0" y1="${baseY}" x2="${W}" y2="${baseY}"/>
-      <path class="area" d="${areaPath}"/>
-      <path class="line" d="${linePath}"/>
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">
+      <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
+      ${bars.join('')}
       ${peakLabel}
-      ${ticks}
-      ${hits}
+      ${labels.join('')}
     </svg>
     <div class="chart-tooltip"></div>
   </div>`;
@@ -336,20 +320,20 @@ function renderNumberLineChart(container, freqArr, ariaLabel) {
   const tip = container.querySelector('.chart-tooltip');
   const wrap = container.querySelector('.chart-wrap');
   const hideTip = () => { tip.style.opacity = '0'; };
-  container.querySelectorAll('.hit').forEach(hit => {
+  container.querySelectorAll('.bar').forEach(rect => {
     const showTip = () => {
-      const num = hit.getAttribute('data-n'), v = hit.getAttribute('data-v');
+      const num = rect.getAttribute('data-n'), v = rect.getAttribute('data-v');
       tip.textContent = `${num}번 · ${v}회`;
       const wrapRect = wrap.getBoundingClientRect();
-      const hitRect = hit.getBoundingClientRect();
-      tip.style.left = (hitRect.left - wrapRect.left + hitRect.width / 2) + 'px';
-      tip.style.top = (hitRect.top - wrapRect.top) + 'px';
+      const barRect = rect.getBoundingClientRect();
+      tip.style.left = (barRect.left - wrapRect.left + barRect.width / 2) + 'px';
+      tip.style.top = (barRect.top - wrapRect.top) + 'px';
       tip.style.opacity = '1';
     };
-    hit.addEventListener('pointerenter', showTip);
-    hit.addEventListener('pointermove', showTip);
-    hit.addEventListener('pointerleave', hideTip);
-    hit.addEventListener('click', showTip);
+    rect.addEventListener('pointerenter', showTip);
+    rect.addEventListener('pointermove', showTip);
+    rect.addEventListener('pointerleave', hideTip);
+    rect.addEventListener('click', showTip);
   });
   wrap.addEventListener('pointerleave', hideTip);
 }
@@ -414,7 +398,7 @@ function rollLotto(){
 
 function renderLottoStats(){
   const stats = computeLottoStats(state.lotto);
-  renderNumberLineChart(document.getElementById('lottoHotRecent'), stats.freqRecent, '최근 100회 번호별 출현 횟수');
+  renderNumberBarChart(document.getElementById('lottoHotRecent'), stats.freqRecent, '최근 100회 번호별 출현 횟수');
   document.getElementById('lottoSumRange').textContent = stats.total ? `${stats.sumLo} ~ ${stats.sumHi}` : '-';
   document.getElementById('lottoConsec').textContent = stats.total ? (stats.consecRatio*100).toFixed(1)+'%' : '-';
 }
@@ -485,20 +469,23 @@ function rollPension(){
 }
 
 function renderJoBarChart(container, joFreq){
-  const W = 150, H = 175, padTop = 20, padBottom = 22, gap = 8;
+  // 자리별 타일과 높이를 맞추는 좁은 칸에 들어가므로 막대는 최대한 가늘게.
+  const W = 130, H = 86, padTop = 14, padBottom = 12;
+  const slot = W / 5;
+  const barW = slot * 0.34;
+  const plotH = H - padTop - padBottom;
   const vals = [1,2,3,4,5].map(j => joFreq[j] || 0);
   const chartMax = Math.max(1, ...vals);
-  const barW = (W - gap * 4) / 5;
-  const plotH = H - padTop - padBottom;
   const parts = [];
   for (let j = 1; j <= 5; j++){
     const v = joFreq[j] || 0;
-    const h = Math.max((v / chartMax) * plotH, v > 0 ? 2 : 0);
-    const x = (j - 1) * (barW + gap);
+    const h = Math.max((v / chartMax) * plotH, v > 0 ? 1.5 : 0);
+    const cx = (j - 0.5) * slot;
+    const x = cx - barW / 2;
     const y = H - padBottom - h;
-    parts.push(`<rect class="bar jo" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="4"/>`);
-    parts.push(`<text class="bar-value" x="${(x + barW/2).toFixed(1)}" y="${Math.max(y - 6, 11).toFixed(1)}" text-anchor="middle">${v}</text>`);
-    parts.push(`<text class="axis-label" x="${(x + barW/2).toFixed(1)}" y="${H - 4}" text-anchor="middle">${j}조</text>`);
+    parts.push(`<rect class="bar jo" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1"/>`);
+    parts.push(`<text class="bar-value" x="${cx.toFixed(1)}" y="${Math.max(y - 4, 9).toFixed(1)}" text-anchor="middle">${v}</text>`);
+    parts.push(`<text class="axis-label" x="${cx.toFixed(1)}" y="${H - 2}" text-anchor="middle">${j}조</text>`);
   }
   container.innerHTML = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="조별 1등 당첨 횟수">
     <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
