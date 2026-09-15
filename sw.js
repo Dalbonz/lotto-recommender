@@ -1,4 +1,4 @@
-const CACHE = "lottery-app-v1";
+const CACHE = "lottery-app-v2";
 const ASSETS = ["./", "./index.html", "./manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -22,7 +22,10 @@ self.addEventListener("fetch", (event) => {
     // 당첨번호 데이터는 항상 최신을 우선 시도, 실패 시 캐시로 폴백 (network-first)
     event.respondWith(
       fetch(event.request)
-        .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); return res; })
+        .then((res) => {
+          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); }
+          return res;
+        })
         .catch(() => caches.match(event.request))
     );
     return;
@@ -31,7 +34,10 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)
-        .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); return res; })
+        .then((res) => {
+          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); }
+          return res;
+        })
         .catch(() => cached);
       return cached || network;
     })
