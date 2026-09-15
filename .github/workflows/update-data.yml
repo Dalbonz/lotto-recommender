@@ -7,10 +7,19 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,3 +45,12 @@ jobs:
             git commit -m "chore: 당첨번호 자동 업데이트 ($(date -u +%Y-%m-%d))"
             git push
           fi
+
+      # GITHUB_TOKEN으로 푸시한 커밋은 다른 워크플로우(push 트리거)를 자동으로
+      # 연쇄 실행시키지 않기 때문에, 이 워크플로우 안에서 직접 Pages 배포까지 수행한다.
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+      - id: deployment
+        uses: actions/deploy-pages@v4
