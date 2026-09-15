@@ -373,8 +373,9 @@ function isBalanced(nums, stats){
 }
 function generateLottoOne(strategy, stats){
   const weights = Array.from({length:45}, (_,i)=> (stats.freq[i+1]||0)+5);
+  let picked;
   for (let a=0;a<2000;a++){
-    let picked = strategy==='random' ? randomSample45() : weightedSample45(weights);
+    picked = strategy==='random' ? randomSample45() : weightedSample45(weights);
     const combo = [...picked].sort((a,b)=>a-b);
     if (stats.known.has(combo.join(','))) continue;
     if (strategy==='balanced' && !isBalanced(combo, stats)) continue;
@@ -399,7 +400,7 @@ function renderLottoSets(sets){
   document.getElementById('lottoSets').innerHTML = sets.map((set,i)=>`
     <div class="set-row"><div class="set-idx">${i+1}.</div>
       <div class="balls">${set.map(n=>`<span class="ball ${ballClass(n)}">${n}</span>`).join('')}</div>
-      <button class="icon-btn" type="button" data-copy="${set.join(', ')}">⧉</button>
+      <button class="icon-btn" type="button" data-copy="${set.join(', ')}" aria-label="${i+1}번째 조합 복사">⧉</button>
     </div>`).join('');
   document.querySelectorAll('#lottoSets [data-copy]').forEach(btn=>{
     btn.addEventListener('click', ()=>copyText(btn.getAttribute('data-copy'), btn));
@@ -471,7 +472,7 @@ function renderPensionSets(sets){
         <span class="jo-badge">${set.jo}조</span>
         ${set.number.split('').map(d=>`<span class="digit">${d}</span>`).join('')}
       </div>
-      <button class="icon-btn" type="button" data-copy="${set.jo}조 ${set.number}">⧉</button>
+      <button class="icon-btn" type="button" data-copy="${set.jo}조 ${set.number}" aria-label="${i+1}번째 조합 복사">⧉</button>
     </div>`).join('');
   document.querySelectorAll('#pensionSets [data-copy]').forEach(btn=>{
     btn.addEventListener('click', ()=>copyText(btn.getAttribute('data-copy'), btn));
