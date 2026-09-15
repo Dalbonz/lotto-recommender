@@ -65,7 +65,8 @@ index.html                     # 메인 앱 (Apple 스타일, 로또/연금복�
 manifest.json, sw.js, icons/   # PWA (아이콘은 One UI 스타일 커스텀 L 마크)
 data/lotto645.json             # 로또 1~1204회 시드 데이터 포함 (2025-12-27 기준)
 data/pension720.json           # 연금복권 1~332회 백필 완료. 항목: round/date/group(1~5)/number(6자리)/bonusNumber(6자리)
-scripts/fetch_lotto645.py      # 동행복권 공식 공개 JSON API 사용 (키 불필요, 검증된 방식)
+scripts/fetch_lotto645.py      # 동행복권 공식 공개 JSON API 사용. 2026-09-15까지 "회차 없음 vs
+                                # 조회 실패" 구분 버그로 1204회에서 멈춰 있었음(수정함, 백필 미검증)
 scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.do) 사용, 검증 완료(Actions 로그 확인)
 .github/workflows/update-data.yml   # 목 19:00 KST + 토 21:00 KST(각 추첨 직후) + 수동실행. 데이터 수집 후 자체 배포까지 함
 .github/workflows/deploy-pages.yml  # main에 push되면 배포 (코드만 바뀔 때용, 데이터 워크플로우와 중복 가능)
@@ -73,12 +74,23 @@ scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.
 
 ## 알려진 리스크 / 정직하게 밝혀둘 것
 
-- `fetch_lotto645.py`가 쓰는 API(`common.do?method=getLottoNumber`)와
-  `fetch_win720.py`가 쓰는 API(`/pt720/selectPstPt720WnList.do`) 둘 다 실제 GitHub
-  Actions 러너에서 호출 성공을 로그로 확인함(2026-09-15). 다만 두 API 모두 동행복권이
-  공식 문서화한 게 아니라 사이트가 내부적으로 쓰는 엔드포인트를 그대로 가져다 쓰는
-  것이므로, 동행복권이 API를 바꾸면 예고 없이 깨질 수 있다 — 실패하면 Actions 로그의
-  `[lotto645]`/`[win720]` 태그부터 확인할 것.
+- `fetch_win720.py`가 쓰는 API(`/pt720/selectPstPt720WnList.do`)는 실제 GitHub Actions
+  러너에서 호출 성공을 로그로 확인함(2026-09-15).
+- **`fetch_lotto645.py`는 "성공 로그"가 실제로는 거짓 성공이었던 적이 있었다 — 이 점을
+  교훈 삼을 것.** 2026-09-15 세션까지 `data/lotto645.json`은 1204회(2025-12-27)에서
+  멈춰 있었는데도, 매 실행 Actions 로그에 에러 없이 "새 회차 없음 (이미 최신)"으로
+  찍히고 있었다. 원인: 이전 코드가 "이 회차가 아직 추첨 안 됨"(API가 정상 JSON으로
+  실패를 응답)과 "요청 자체가 실패함"(dhlottery가 빈 응답/네트워크 오류를 반환)을
+  구분하지 않고 모든 예외를 전자로 취급했다 — 그래서 API가 일시적으로 빈 응답을 주면
+  조용히 "최신"으로 잘못 넘어갔다(실제로는 30회차 이상 누락된 상태였음). 2026-09-15
+  세션에서 재시도(3회, 백오프) + 두 경우를 명확히 분리하도록 고쳤고(실패 시 "확인
+  시각"도 갱신 안 함), **하지만 이 Codespace 네트워크가 dhlottery에 막혀 있어 실제
+  백필이 되는지는 검증 못 했다** — 다음 세션은 Actions 로그의 `[lotto645]` 태그를
+  보고 실제로 새 회차가 잡히는지, 여전히 "조회 실패"만 찍히는지 확인할 것. 이 교훈:
+  "에러 없이 실행됨"과 "실제로 올바르게 동작함"은 다르다 — 로그에 에러가 없다고
+  곧바로 "검증됨"이라고 쓰지 말 것.
+  두 API 모두 동행복권이 공식 문서화한 게 아니라 사이트가 내부적으로 쓰는 엔드포인트를
+  그대로 가져다 쓰는 것이므로, 동행복권이 API를 바꾸면 예고 없이 깨질 수 있다.
 - **Codespace 자체 네트워크가 dhlottery.co.kr에 간헐적으로 타임아웃 나는 걸 관찰함**
   (curl/urllib/헤드리스 브라우저 전부 겪음, 재시도하면 성공하기도 함). GitHub Actions
   러너는 다른 네트워크라 이 문제와 무관한 걸로 보이지만(실제 Actions 로그에서는
@@ -88,5 +100,11 @@ scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.
 
 ## 다음에 할 일
 
-우선순위 높은 미해결 항목 없음 — 위 8~13번 항목으로 이전 세션이 남긴 할 일은 모두
-검증 완료됨. 앞으로 추가 요청이 있으면 그때 착수.
+1. **최우선**: `update-data.yml`을 Actions 탭에서 수동 실행하고 `[lotto645]` 로그를
+   확인할 것 — 2026-09-15에 고친 재시도 로직으로 1204회 이후 밀린 회차(실제 최신은
+   대략 1240회 근처로 추정됨, 직접 확인 필요)가 실제로 채워지는지 검증 안 됨. 여전히
+   "조회 실패"만 찍히면 dhlottery의 `common.do` 엔드포인트 자체가 바뀌었을 가능성이
+   있으므로(win720처럼) 실제 페이지 구조를 다시 확인해야 함.
+2. `data/lotto645.json`의 1~1004회차 날짜 중 일부(824건)가 `2002-12-7`처럼 0패딩
+   안 된 형식임(`2002-12-07`이어야 함). 화면 표시에는 문제 없지만(Date로 파싱 안 함)
+   데이터 형식 통일이 필요하면 정리할 것 — 과거 시드 데이터라 지금까지는 안 건드림.
