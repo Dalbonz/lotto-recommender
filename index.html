@@ -29,6 +29,7 @@
     --warn-text: #7A5B12;
     --ball-y: #DFA23C; --ball-b: #3E7CB8; --ball-r: #D14A3B; --ball-gy: #83807B; --ball-gr: #4E9C74;
     --pension: #B7862C;
+    --cta-bg: #1C1C1E; --cta-ink: #FFFFFF;
     --shadow: 0 1px 3px rgba(0,0,0,.14);
   }
   @media (prefers-color-scheme: dark) {
@@ -46,6 +47,7 @@
       --warn-text: #F0D794;
       --ball-y: #EAB559; --ball-b: #5F9BD6; --ball-r: #E36552; --ball-gy: #9B968F; --ball-gr: #63BE93;
       --pension: #D8A73D;
+      --cta-bg: #FFFFFF; --cta-ink: #1C1C1E;
       --shadow: 0 1px 3px rgba(0,0,0,.6);
     }
   }
@@ -54,7 +56,7 @@
     --text: #F5F5F7; --text-secondary: #98989D; --accent: #2997FF; --accent-ink: #FFFFFF;
     --warn-bg: #332B12; --warn-border: #6B5518; --warn-text: #F0D794;
     --ball-y: #EAB559; --ball-b: #5F9BD6; --ball-r: #E36552; --ball-gy: #9B968F; --ball-gr: #63BE93;
-    --pension: #D8A73D; --shadow: 0 1px 3px rgba(0,0,0,.6);
+    --pension: #D8A73D; --cta-bg: #FFFFFF; --cta-ink: #1C1C1E; --shadow: 0 1px 3px rgba(0,0,0,.6);
   }
 
   * { box-sizing: border-box; }
@@ -97,13 +99,13 @@
     font-weight: 600; text-align: right; -webkit-appearance: none; appearance: none; padding-right: 2px;
   }
   .select-wrap { display: inline-flex; align-items: center; gap: 3px; }
-  .select-wrap .chevron { font-size: 10px; color: var(--accent); }
+  .select-wrap .chevron { color: var(--accent); flex-shrink: 0; }
 
   .updated-line { color: var(--text-secondary); font-size: 11.5px; margin: 0 0 18px; }
 
   button.cta {
     width: 100%; font-family: inherit; font-weight: 700; font-size: 16px; padding: 14px 16px;
-    border-radius: 12px; border: none; background: var(--accent); color: var(--accent-ink); cursor: pointer; margin: 14px 0 4px;
+    border-radius: 12px; border: none; background: var(--cta-bg); color: var(--cta-ink); cursor: pointer; margin: 14px 0 4px;
   }
   button.cta:active { opacity: .85; }
 
@@ -179,7 +181,7 @@
             <option value="weighted">통계 가중 랜덤</option>
             <option value="random">완전 무작위</option>
           </select>
-          <span class="chevron" aria-hidden="true">⌄</span>
+          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
       <div class="row"><span class="label">세트 수</span>
@@ -189,7 +191,7 @@
             <option value="5" selected>5세트</option>
             <option value="10">10세트</option>
           </select>
-          <span class="chevron" aria-hidden="true">⌄</span>
+          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
     </div>
@@ -216,7 +218,7 @@
             <option value="weighted">통계 가중 랜덤</option>
             <option value="random">완전 무작위</option>
           </select>
-          <span class="chevron" aria-hidden="true">⌄</span>
+          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
       <div class="row"><span class="label">세트 수</span>
@@ -226,7 +228,7 @@
             <option value="5" selected>5세트</option>
             <option value="10">10세트</option>
           </select>
-          <span class="chevron" aria-hidden="true">⌄</span>
+          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5L5 6.5L8 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </div>
     </div>
