@@ -123,6 +123,17 @@
   .note b { font-weight: 700; }
   .empty-note { font-size: 13px; color: var(--text-secondary); padding: 14px 16px; background: var(--surface); border-radius: 14px; line-height: 1.6; }
 
+  .stats-details { margin-top: 22px; }
+  .stats-details summary {
+    list-style: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent);
+    padding: 10px 2px; display: flex; align-items: center; gap: 6px; -webkit-tap-highlight-color: transparent;
+  }
+  .stats-details summary::-webkit-details-marker { display: none; }
+  .stats-details summary::before { content: '▸'; font-size: 11px; transition: transform .15s ease; }
+  .stats-details[open] summary::before { transform: rotate(90deg); }
+  .stats-details[open] summary { color: var(--text-secondary); }
+  .stats-details .section-label:first-of-type { margin-top: 4px; }
+
   .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
   .digit-col { background: var(--surface); border-radius: 12px; padding: 10px 4px; text-align: center; }
   .digit-col .pos { font-size: 10.5px; color: var(--text-secondary); margin-bottom: 6px; }
@@ -164,20 +175,24 @@
     <button class="cta" id="lottoRoll" type="button">다시 뽑기</button>
     <div class="sets" id="lottoSets"></div>
 
-    <div class="section-label">최근 100회 핫넘버</div>
-    <div class="group" id="lottoHotRecent"></div>
+    <details class="stats-details">
+      <summary>과거 통계 더 보기 (참고용, 당첨 확률과 무관)</summary>
 
-    <div class="section-label">전체 기간 핫넘버</div>
-    <div class="group" id="lottoHotAll"></div>
+      <div class="section-label">최근 100회 핫넘버</div>
+      <div class="group" id="lottoHotRecent"></div>
 
-    <div class="section-label">콜드넘버 (최장 미출현)</div>
-    <div class="group" id="lottoCold"></div>
+      <div class="section-label">전체 기간 핫넘버</div>
+      <div class="group" id="lottoHotAll"></div>
 
-    <div class="section-label">참고 통계</div>
-    <div class="group">
-      <div class="row"><span class="label">번호 합계 주요 범위</span><span class="value" id="lottoSumRange">-</span></div>
-      <div class="row"><span class="label">연속번호 포함 비율</span><span class="value" id="lottoConsec">-</span></div>
-    </div>
+      <div class="section-label">콜드넘버 (최장 미출현)</div>
+      <div class="group" id="lottoCold"></div>
+
+      <div class="section-label">참고 통계</div>
+      <div class="group">
+        <div class="row"><span class="label">번호 합계 주요 범위</span><span class="value" id="lottoSumRange">-</span></div>
+        <div class="row"><span class="label">연속번호 포함 비율</span><span class="value" id="lottoConsec">-</span></div>
+      </div>
+    </details>
   </section>
 
   <!-- 연금복권720+ -->
@@ -201,11 +216,15 @@
     <button class="cta" id="pensionRoll" type="button">다시 뽑기</button>
     <div class="sets" id="pensionSets"></div>
 
-    <div class="section-label">자리별 최다 출현 숫자</div>
-    <div id="pensionDigitsWrap"><div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 매일 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div></div>
+    <details class="stats-details">
+      <summary>과거 통계 더 보기 (참고용, 당첨 확률과 무관)</summary>
 
-    <div class="section-label">조(組)별 출현 횟수</div>
-    <div class="group" id="pensionJoStats"></div>
+      <div class="section-label">자리별 최다 출현 숫자</div>
+      <div id="pensionDigitsWrap"><div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div></div>
+
+      <div class="section-label">조(組)별 출현 횟수</div>
+      <div class="group" id="pensionJoStats"></div>
+    </details>
   </section>
 
   <div class="note">
@@ -215,7 +234,7 @@
   </div>
 
   <footer>
-    데이터 출처: 동행복권 공식 결과 페이지 기반, 매일 자동 수집 · 연금복권720+는 공식 API가 없어
+    데이터 출처: 동행복권 공식 결과 페이지 기반, 매주 목·토 당첨 발표 직후 자동 수집 · 연금복권720+는 공식 API가 없어
     페이지 파싱 방식으로 수집되므로 페이지 구조가 바뀌면 일시적으로 갱신이 지연될 수 있습니다.
   </footer>
 </div>
@@ -318,7 +337,7 @@ function rollLotto(){
 function renderLottoStats(){
   const stats = computeLottoStats(state.lotto);
   document.getElementById('subtitle').textContent = state.lotto.length
-    ? `로또 최신 ${stats.latestRound}회(${stats.latestDate}) 분석 · 매일 자동 업데이트`
+    ? `로또 최신 ${stats.latestRound}회(${stats.latestDate}) 분석 · 매주 목·토 자동 업데이트`
     : '데이터 없음';
   renderBallRow(document.getElementById('lottoHotRecent'), topN(stats.freqRecent,10), '회');
   renderBallRow(document.getElementById('lottoHotAll'), topN(stats.freq,10), '회');
@@ -397,7 +416,7 @@ function renderPensionStats(){
   const wrap = document.getElementById('pensionDigitsWrap');
   const joWrap = document.getElementById('pensionJoStats');
   if (!stats.total){
-    wrap.innerHTML = '<div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 매일 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div>';
+    wrap.innerHTML = '<div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div>';
     joWrap.innerHTML = '<div class="row"><span class="label" style="color:var(--text-secondary);">데이터 없음</span></div>';
     return;
   }
@@ -418,8 +437,8 @@ document.querySelectorAll('.segmented [data-tab]').forEach(btn=>{
     document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
     document.getElementById('tab-'+tab).classList.add('active');
     document.getElementById('subtitle').textContent = tab==='lotto'
-      ? (state.lotto.length ? `로또 최신 ${computeLottoStats(state.lotto).latestRound}회(${computeLottoStats(state.lotto).latestDate}) 분석 · 매일 자동 업데이트` : '데이터 없음')
-      : (state.pension.length ? `연금복권 최신 ${computePensionStats(state.pension).latestRound}회(${computePensionStats(state.pension).latestDate}) 분석 · 매일 자동 업데이트` : '연금복권720+ 데이터 수집 대기 중');
+      ? (state.lotto.length ? `로또 최신 ${computeLottoStats(state.lotto).latestRound}회(${computeLottoStats(state.lotto).latestDate}) 분석 · 매주 목·토 자동 업데이트` : '데이터 없음')
+      : (state.pension.length ? `연금복권 최신 ${computePensionStats(state.pension).latestRound}회(${computePensionStats(state.pension).latestDate}) 분석 · 매주 목·토 자동 업데이트` : '연금복권720+ 데이터 수집 대기 중');
   });
 });
 
