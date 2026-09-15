@@ -1,36 +1,56 @@
 """
 연금복권720+ 당첨번호 자동 업데이트.
 
-로또 6/45와 달리 동행복권은 연금복권720+에 대한 공식 JSON API를 공개하고 있지 않다.
-그래서 공개 결과 페이지(HTML)를 받아 텍스트에서 패턴으로 추출하는 방식을 쓴다.
+예전 버전은 동행복권이 공식 API를 공개하지 않는다고 보고 결과 페이지(HTML)를 받아
+정규식으로 파싱했는데, 실제로 Codespace에서 직접 페이지를 열어 보니 두 가지가
+잘못돼 있었다.
 
-주의(정직하게 밝힘): 이 스크립트를 작성한 환경(샌드박스)에서는 dhlottery.co.kr 접속 자체가
-네트워크 정책으로 막혀 있어서, 실제 페이지의 HTML 구조를 직접 눈으로 확인하지 못한 채
-합리적으로 추정되는 패턴으로 작성했다. GitHub Actions에서 처음 실행될 때 파싱이 실패할 수
-있으므로, 검증에 실패하면 데이터를 절대 덮어쓰지 않고 로그만 남기고 조용히 종료한다.
-(로또 6/45 쪽은 공식 JSON API를 쓰므로 이 문제가 없다.)
+1. 예전에 쓰던 `gameResult.do?method=win720&drwNo=N` URL은 더 이상 당첨번호를
+   담고 있지 않다. 동행복권이 결과 페이지를 SPA(자바스크립트 렌더링)로 바꾸면서
+   그 URL은 빈 페이지 껍데기만 반환한다 — 그래서 정규식이 항상 0개 매칭이었다.
+   SPA가 내부적으로 호출하는 JSON API(`/pt720/selectPstPt720WnList.do`)를 대신
+   직접 호출한다. 이 API는 한 번의 요청으로 1회차부터 최신 회차까지 전체 이력을
+   반환하므로, 로또처럼 회차별로 반복 요청할 필요도 없다.
+2. **데이터 모델 자체가 잘못돼 있었다.** 연금복권720+는 "5개 조가 각각 당첨번호를
+   가진다"가 아니라, 회차마다 1등은 특정 조(1~5) 하나 + 6자리 번호 하나뿐이고,
+   보너스 6자리 번호가 조 상관없이 별도로 하나 더 있는 구조다. 그래서
+   `data/pension720.json`의 스키마를 `groups: [5개 번호]`에서
+   `group + number + bonusNumber`로 바꿨다(index.html의 통계 계산도 함께 수정).
 """
 import json
-import re
 import sys
-import time
 import urllib.request
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "pension720.json"
-RESULT_URL = "https://www.dhlottery.co.kr/gameResult.do?method=win720&drwNo={round}"
-
-GROUP_NUM_RE = re.compile(r"([1-5])\s*조[^0-9]{0,30}?(\d{6})")
-ROUND_RE = re.compile(r"(\d{1,4})\s*회")
-DATE_RE = re.compile(r"(\d{4})[.\-년]\s*(\d{1,2})[.\-월]\s*(\d{1,2})")
+API_URL = "https://www.dhlottery.co.kr/pt720/selectPstPt720WnList.do"
 
 
-def strip_tags(html: str) -> str:
-    text = re.sub(r"<script[\s\S]*?</script>", " ", html, flags=re.I)
-    text = re.sub(r"<style[\s\S]*?</style>", " ", text, flags=re.I)
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"&nbsp;", " ", text)
-    return re.sub(r"\s+", " ", text).strip()
+def fetch_all_rounds() -> list[dict]:
+    req = urllib.request.Request(
+        API_URL,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        payload = json.loads(resp.read().decode("utf-8"))
+
+    rows = payload["data"]["result"]
+    out = []
+    for row in rows:
+        ymd = str(row["psltRflYmd"])
+        out.append({
+            "round": int(row["psltEpsd"]),
+            "date": f"{ymd[0:4]}-{ymd[4:6]}-{ymd[6:8]}",
+            "group": int(row["wnBndNo"]),
+            "number": str(row["wnRnkVl"]).zfill(6),
+            "bonusNumber": str(row["bnsRnkVl"]).zfill(6),
+        })
+    out.sort(key=lambda r: r["round"])
+    return out
 
 
 def load_existing() -> list:
@@ -39,83 +59,29 @@ def load_existing() -> list:
     return json.loads(DATA_PATH.read_text(encoding="utf-8"))
 
 
-def fetch_round(round_no: int) -> dict | None:
-    req = urllib.request.Request(
-        RESULT_URL.format(round=round_no),
-        headers={"User-Agent": "Mozilla/5.0"},
-    )
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        raw = resp.read().decode("euc-kr", errors="ignore")
-
-    text = strip_tags(raw)
-
-    # 존재하지 않는 회차인지 대략 판단 (본문이 지나치게 짧거나 "없습니다" 류 안내문)
-    if len(text) < 200 or "없습니다" in text[:400]:
-        return None
-
-    groups = {}
-    for m in GROUP_NUM_RE.finditer(text):
-        g = int(m.group(1))
-        num = m.group(2)
-        groups.setdefault(g, num)
-
-    round_match = ROUND_RE.search(text)
-    date_match = DATE_RE.search(text)
-
-    if len(groups) != 5:
-        raise ValueError(
-            f"조 번호 5개를 모두 찾지 못함 (찾은 개수: {len(groups)}) - 페이지 구조가 예상과 다를 수 있음"
-        )
-
-    return {
-        "round": round_no,
-        "date": (
-            f"{date_match.group(1)}-{int(date_match.group(2)):02d}-{int(date_match.group(3)):02d}"
-            if date_match else None
-        ),
-        "groups": [groups[g] for g in range(1, 6)],  # index 0 = 1조 ... index 4 = 5조
-    }
-
-
 def main():
     existing = load_existing()
     last_round = existing[-1]["round"] if existing else 0
     print(f"[win720] 현재 저장된 마지막 회차: {last_round}")
 
-    round_no = last_round + 1
-    new_rows = []
-    failed = False
-    while True:
-        try:
-            row = fetch_round(round_no)
-        except Exception as e:
-            print(f"[win720] {round_no}회 파싱 실패, 건너뜀: {e}", file=sys.stderr)
-            failed = True
-            break
-        if row is None:
-            break
-        new_rows.append(row)
-        print(f"[win720] {round_no}회 ({row['date']}) 수신: {row['groups']}")
-        round_no += 1
-        time.sleep(0.3)
+    try:
+        all_rounds = fetch_all_rounds()
+    except Exception as e:
+        print(f"[win720] API 조회 실패, 건너뜀: {e}", file=sys.stderr)
+        return
 
-    if new_rows:
-        existing.extend(new_rows)
-        DATA_PATH.write_text(
-            json.dumps(existing, ensure_ascii=False, separators=(",", ":")),
-            encoding="utf-8",
-        )
-        print(f"[win720] {len(new_rows)}개 회차 추가 저장 (최신 {existing[-1]['round']}회)")
-    else:
+    new_rows = [r for r in all_rounds if r["round"] > last_round]
+    if not new_rows:
         print("[win720] 새로 저장된 회차 없음")
+        return
 
-    if failed:
-        print(
-            "[win720] 경고: 파싱 실패가 감지되었습니다. "
-            "페이지 구조가 바뀌었을 수 있으니 scripts/fetch_win720.py 점검이 필요합니다.",
-            file=sys.stderr,
-        )
-        # 워크플로우 전체를 실패시키지는 않음 (로또 데이터는 정상 커밋되도록)
+    existing.extend(new_rows)
+    existing.sort(key=lambda r: r["round"])
+    DATA_PATH.write_text(
+        json.dumps(existing, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    print(f"[win720] {len(new_rows)}개 회차 추가 저장 (최신 {existing[-1]['round']}회, {existing[-1]['date']})")
 
 
 if __name__ == "__main__":

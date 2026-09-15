@@ -248,8 +248,7 @@
   </div>
 
   <footer>
-    데이터 출처: 동행복권 공식 결과 페이지 기반, 매주 목·토 당첨 발표 직후 자동 수집 · 연금복권720+는 공식 API가 없어
-    페이지 파싱 방식으로 수집되므로 페이지 구조가 바뀌면 일시적으로 갱신이 지연될 수 있습니다.
+    데이터 출처: 동행복권 공식 결과 페이지 기반, 매주 목·토 당첨 발표 직후 자동 수집.
   </footer>
 </div>
 
@@ -420,14 +419,14 @@ function renderLottoStats(){
 
 /* ---------- 연금복권720+ ---------- */
 function computePensionStats(draws){
+  // 연금복권720+는 회차마다 1등이 특정 조(1~5) 하나 + 6자리 번호 하나뿐이다.
+  // (보너스 번호는 조 상관없이 별도이므로 번호 추천용 통계에는 포함하지 않는다.)
   const digitFreq = Array.from({length:6}, ()=> new Array(10).fill(0));
   const joFreq = new Array(6).fill(0); // index 1..5
   draws.forEach(d=>{
-    d.groups.forEach((num, joIdx)=>{
-      joFreq[joIdx+1]++;
-      const s = String(num).padStart(6,'0');
-      for (let p=0;p<6;p++) digitFreq[p][parseInt(s[p],10)]++;
-    });
+    joFreq[d.group]++;
+    const s = String(d.number).padStart(6,'0');
+    for (let p=0;p<6;p++) digitFreq[p][parseInt(s[p],10)]++;
   });
   const latest = draws[draws.length-1];
   return { digitFreq, joFreq, total: draws.length,
