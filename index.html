@@ -110,7 +110,7 @@
   button.cta:active { opacity: .85; }
 
   .sets { display: flex; flex-direction: column; gap: 10px; }
-  .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; }
+  .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; width: 90%; margin-inline: auto; }
   .set-idx { font-size: 12px; color: var(--text-secondary); width: 14px; flex-shrink: 0; font-weight: 600; }
   .balls { display: flex; justify-content: space-evenly; gap: 6px; flex-wrap: wrap; flex: 1; }
   .ball { width: 29px; height: 29px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12.5px; color: white; flex-shrink: 0; }
@@ -136,7 +136,7 @@
   .chart-svg .bar.jo { fill: var(--pension); }
   .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
   .chart-svg .axis-label { font-size: 15px; fill: var(--text-secondary); font-family: inherit; }
-  .chart-svg .axis-label-n { font-size: 15px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .axis-label-n { font-size: 11px; fill: var(--text-secondary); font-family: inherit; }
   .chart-svg .peak-label, .chart-svg .bar-value { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
   .chart-tooltip {
     position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
@@ -149,11 +149,11 @@
   .combo-jo .chart-svg { height: 100%; }
   .combo-digits { flex: 1; min-width: 0; }
 
-  .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; height: 100%; }
+  .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
   .digit-col { background: var(--bg); border-radius: 9px; padding: 8px 1px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-  .digit-col .pos { font-size: 16px; color: var(--text-secondary); margin-bottom: 3px; }
+  .digit-col .pos { font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; }
   .digit-col .val { font-size: 26px; font-weight: 800; }
-  .digit-col .cnt { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
+  .digit-col .cnt { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
   footer { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; margin-top: 18px; padding-inline: 2px; }
 </style>
@@ -281,10 +281,11 @@ function computeLottoStats(draws) {
 }
 
 function renderNumberBarChart(container, freqArr, ariaLabel) {
-  // 막대는 선 수준으로 가늘게, x축 숫자는 사선 배치로 크게 키운다.
-  const W = 440, H = 210, padTop = 18, padBottom = 58, barW = 1.6;
+  // 막대는 선 수준으로 가늘게. x축 숫자는 5개씩 계단식으로 내려갔다 다시 리셋.
+  const W = 440, H = 216, padTop = 18, padBottom = 76, barW = 1.6;
   const n = 45;
   const gap = (W - n * barW) / (n - 1);
+  const stepH = 13, baseLabelY = H - padBottom + 14;
   let max = 1, peakIdx = 1;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
@@ -294,7 +295,6 @@ function renderNumberBarChart(container, freqArr, ariaLabel) {
   const plotH = H - padTop - padBottom;
   const bars = [];
   const labels = [];
-  const labelY = H - padBottom + 6;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
     const h = Math.max((v / max) * plotH, v > 0 ? 1.5 : 0);
@@ -302,7 +302,9 @@ function renderNumberBarChart(container, freqArr, ariaLabel) {
     const y = H - padBottom - h;
     const cx = x + barW / 2;
     bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="0.8"/>`);
-    labels.push(`<text class="axis-label-n" x="${cx.toFixed(2)}" y="${labelY.toFixed(2)}" text-anchor="end" transform="rotate(-60 ${cx.toFixed(2)} ${labelY.toFixed(2)})">${i}</text>`);
+    const posInGroup = (i - 1) % 5;
+    const labelY = baseLabelY + posInGroup * stepH;
+    labels.push(`<text class="axis-label-n" x="${cx.toFixed(2)}" y="${labelY.toFixed(2)}" text-anchor="middle">${i}</text>`);
   }
   const peakX = (peakIdx - 1) * (barW + gap) + barW / 2;
   const peakH = Math.max(((freqArr[peakIdx] || 0) / max) * plotH, 1.5);
@@ -509,6 +511,16 @@ function renderPensionStats(){
     return `<div class="digit-col"><div class="pos">${pos+1}번째</div><div class="val">${best}</div><div class="cnt">${freqs[best]}회</div></div>`;
   }).join('')}</div>`;
   renderJoBarChart(joChart, stats.joFreq);
+  syncJoChartHeight();
+}
+
+function syncJoChartHeight(){
+  // 연금 탭이 display:none인 상태(초기 로드 시 로또 탭이 기본)에서는 높이가 0으로 측정되므로,
+  // 탭이 실제로 보일 때(탭 전환 시점)도 다시 맞춰준다.
+  const wrap = document.getElementById('pensionDigitsWrap');
+  const joChart = document.getElementById('pensionJoChart');
+  const gridEl = wrap && wrap.querySelector('.digit-grid');
+  if (gridEl && gridEl.offsetHeight > 0) joChart.style.height = gridEl.offsetHeight + 'px';
 }
 
 /* ---------- 탭 전환 / 상단 요약 ---------- */
@@ -547,6 +559,7 @@ document.querySelectorAll('.segmented [data-tab]').forEach(btn=>{
     document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
     document.getElementById('tab-'+tab).classList.add('active');
     updateHeader(tab);
+    if (tab === 'pension') syncJoChartHeight();
   });
 });
 
