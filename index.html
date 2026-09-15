@@ -134,6 +134,20 @@
   .stats-details[open] summary { color: var(--text-secondary); }
   .stats-details .section-label:first-of-type { margin-top: 4px; }
 
+  .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; }
+  .chart-wrap { position: relative; }
+  .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart-svg .bar.y { fill: var(--ball-y); } .chart-svg .bar.b { fill: var(--ball-b); } .chart-svg .bar.r { fill: var(--ball-r); }
+  .chart-svg .bar.gy { fill: var(--ball-gy); } .chart-svg .bar.gr { fill: var(--ball-gr); }
+  .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
+  .chart-svg .axis-label { font-size: 7.5px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .peak-label { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
+  .chart-tooltip {
+    position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
+    font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; transform: translate(-50%,-100%);
+    white-space: nowrap; opacity: 0; transition: opacity .1s ease; top: -6px;
+  }
+
   .digit-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
   .digit-col { background: var(--surface); border-radius: 12px; padding: 10px 4px; text-align: center; }
   .digit-col .pos { font-size: 10.5px; color: var(--text-secondary); margin-bottom: 6px; }
@@ -178,11 +192,11 @@
     <details class="stats-details">
       <summary>과거 통계 더 보기 (참고용, 당첨 확률과 무관)</summary>
 
-      <div class="section-label">최근 100회 핫넘버</div>
-      <div class="group" id="lottoHotRecent"></div>
+      <div class="section-label">최근 100회 번호별 출현 횟수</div>
+      <div class="chart-card" id="lottoHotRecent"></div>
 
-      <div class="section-label">전체 기간 핫넘버</div>
-      <div class="group" id="lottoHotAll"></div>
+      <div class="section-label">전체 기간 번호별 출현 횟수</div>
+      <div class="chart-card" id="lottoHotAll"></div>
 
       <div class="section-label">콜드넘버 (최장 미출현)</div>
       <div class="group" id="lottoCold"></div>
@@ -267,8 +281,66 @@ function computeLottoStats(draws) {
            known, total: draws.length, latestRound: latest?latest.round:0, latestDate: latest?latest.date:'-' };
 }
 
-function topN(arr, n) { const items=[]; for(let i=1;i<=45;i++) items.push([i,arr[i]]); items.sort((a,b)=>b[1]-a[1]); return items.slice(0,n); }
 function coldN(stats, n) { const items=[]; for(let i=1;i<=45;i++) items.push([i, stats.latestRound - stats.lastSeen[i]]); items.sort((a,b)=>b[1]-a[1]); return items.slice(0,n); }
+
+function renderNumberBarChart(container, freqArr, ariaLabel) {
+  const W = 440, H = 150, padTop = 16, padBottom = 18, gap = 2;
+  const n = 45;
+  const barW = (W - gap * (n - 1)) / n;
+  let max = 1, peakIdx = 1;
+  for (let i = 1; i <= 45; i++) {
+    const v = freqArr[i] || 0;
+    if (v > max) max = v;
+    if (v > (freqArr[peakIdx] || 0)) peakIdx = i;
+  }
+  const plotH = H - padTop - padBottom;
+  const bars = [];
+  for (let i = 1; i <= 45; i++) {
+    const v = freqArr[i] || 0;
+    const h = Math.max((v / max) * plotH, v > 0 ? 1.5 : 0);
+    const x = (i - 1) * (barW + gap);
+    const y = H - padBottom - h;
+    bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="1.5"/>`);
+  }
+  const ticks = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45].map(i => {
+    const x = (i - 1) * (barW + gap) + barW / 2;
+    return `<text class="axis-label" x="${x.toFixed(2)}" y="${H - 5}" text-anchor="middle">${i}</text>`;
+  }).join('');
+  const peakH = Math.max(((freqArr[peakIdx] || 0) / max) * plotH, 1.5);
+  const peakX = (peakIdx - 1) * (barW + gap) + barW / 2;
+  const peakY = Math.max(H - padBottom - peakH - 5, 10);
+  const peakLabel = `<text class="peak-label" x="${peakX.toFixed(2)}" y="${peakY.toFixed(2)}" text-anchor="middle">${freqArr[peakIdx] || 0}회</text>`;
+
+  container.innerHTML = `<div class="chart-wrap">
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">
+      <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
+      ${bars.join('')}
+      ${ticks}
+      ${peakLabel}
+    </svg>
+    <div class="chart-tooltip"></div>
+  </div>`;
+
+  const tip = container.querySelector('.chart-tooltip');
+  const wrap = container.querySelector('.chart-wrap');
+  const hideTip = () => { tip.style.opacity = '0'; };
+  container.querySelectorAll('.bar').forEach(rect => {
+    const showTip = () => {
+      const num = rect.getAttribute('data-n'), v = rect.getAttribute('data-v');
+      tip.textContent = `${num}번 · ${v}회`;
+      const wrapRect = wrap.getBoundingClientRect();
+      const barRect = rect.getBoundingClientRect();
+      tip.style.left = (barRect.left - wrapRect.left + barRect.width / 2) + 'px';
+      tip.style.top = (barRect.top - wrapRect.top) + 'px';
+      tip.style.opacity = '1';
+    };
+    rect.addEventListener('pointerenter', showTip);
+    rect.addEventListener('pointermove', showTip);
+    rect.addEventListener('pointerleave', hideTip);
+    rect.addEventListener('click', showTip);
+  });
+  wrap.addEventListener('pointerleave', hideTip);
+}
 
 function renderBallRow(container, list, suffix) {
   container.innerHTML = list.map(([n,c]) => `
@@ -339,8 +411,8 @@ function renderLottoStats(){
   document.getElementById('subtitle').textContent = state.lotto.length
     ? `로또 최신 ${stats.latestRound}회(${stats.latestDate}) 분석 · 매주 목·토 자동 업데이트`
     : '데이터 없음';
-  renderBallRow(document.getElementById('lottoHotRecent'), topN(stats.freqRecent,10), '회');
-  renderBallRow(document.getElementById('lottoHotAll'), topN(stats.freq,10), '회');
+  renderNumberBarChart(document.getElementById('lottoHotRecent'), stats.freqRecent, '최근 100회 번호별 출현 횟수');
+  renderNumberBarChart(document.getElementById('lottoHotAll'), stats.freq, '전체 기간 번호별 출현 횟수');
   renderBallRow(document.getElementById('lottoCold'), coldN(stats,10), '회차 전');
   document.getElementById('lottoSumRange').textContent = stats.total ? `${stats.sumLo} ~ ${stats.sumHi}` : '-';
   document.getElementById('lottoConsec').textContent = stats.total ? (stats.consecRatio*100).toFixed(1)+'%' : '-';
