@@ -62,7 +62,7 @@
   * { box-sizing: border-box; }
   body {
     background: var(--bg); color: var(--text); margin: 0; padding-block: 24px 48px;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", Inter, sans-serif;
+    font-family: "SamsungOne", "Samsung One", "SamsungOneKorean", "SEC-Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", Inter, sans-serif;
     font-variant-numeric: tabular-nums;
   }
   .wrap { max-width: 480px; margin: 0 auto; padding-inline: 16px; }
@@ -88,7 +88,7 @@
   }
   .section-label:first-of-type { margin-top: 0; }
 
-  .group { background: var(--surface); border-radius: 14px; overflow: hidden; }
+  .group { background: var(--surface); border-radius: 14px; overflow: hidden; width: 90%; margin-inline: auto; }
   .row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
   .row:last-child { border-bottom: none; }
   .row .label { font-size: 15px; }
@@ -113,13 +113,13 @@
   .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; width: 90%; margin-inline: auto; }
   .set-idx { font-size: 12px; color: var(--text-secondary); width: 14px; flex-shrink: 0; font-weight: 600; }
   .balls { display: flex; justify-content: space-evenly; gap: 6px; flex-wrap: wrap; flex: 1; }
-  .ball { width: 29px; height: 29px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12.5px; color: white; flex-shrink: 0; }
+  .ball { width: 33px; height: 33px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14.5px; color: white; flex-shrink: 0; }
   .ball.y { background: var(--ball-y); } .ball.b { background: var(--ball-b); } .ball.r { background: var(--ball-r); }
   .ball.gy { background: var(--ball-gy); } .ball.gr { background: var(--ball-gr); }
 
   .pension-set { display: flex; justify-content: space-evenly; align-items: center; gap: 4px; flex: 1; flex-wrap: wrap; }
-  .jo-badge { background: var(--pension); color: white; font-weight: 700; font-size: 12.5px; padding: 5px 9px; border-radius: 8px; flex-shrink: 0; }
-  .digit { width: 22px; height: 27px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .jo-badge { background: var(--pension); color: white; font-weight: 700; font-size: 14.5px; padding: 6px 10px; border-radius: 8px; flex-shrink: 0; }
+  .digit { width: 25px; height: 31px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
 
   .icon-btn { border: none; background: transparent; color: var(--text-secondary); font-size: 16px; width: 28px; height: 28px; cursor: pointer; flex-shrink: 0; }
   .icon-btn.copied { color: var(--ball-gr); }
@@ -128,24 +128,32 @@
   .note b { font-weight: 700; }
   .empty-note { font-size: 13px; color: var(--text-secondary); padding: 14px 16px; background: var(--surface); border-radius: 14px; line-height: 1.6; }
 
-  .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; }
+  .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; width: 90%; margin-inline: auto; }
   .chart-wrap { position: relative; height: 100%; }
   .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
   .chart-svg .bar.y { fill: var(--ball-y); } .chart-svg .bar.b { fill: var(--ball-b); } .chart-svg .bar.r { fill: var(--ball-r); }
   .chart-svg .bar.gy { fill: var(--ball-gy); } .chart-svg .bar.gr { fill: var(--ball-gr); }
   .chart-svg .bar.jo { fill: var(--pension); }
   .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
-  .chart-svg .axis-label { font-size: 15px; fill: var(--text-secondary); font-family: inherit; }
+  .chart-svg .axis-label { font-size: 8.5px; fill: var(--text-secondary); font-family: inherit; }
   .chart-svg .axis-label-n { font-size: 11px; fill: var(--text-secondary); font-family: inherit; }
-  .chart-svg .peak-label, .chart-svg .bar-value { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
+  .chart-svg .peak-label { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
+  .chart-svg .bar-value { font-size: 10px; font-weight: 700; fill: var(--text); font-family: inherit; }
   .chart-tooltip {
     position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
     font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; transform: translate(-50%,-100%);
     white-space: nowrap; opacity: 0; transition: opacity .1s ease; top: -6px;
   }
 
-  .combo-card { display: flex; gap: 10px; background: var(--surface); border-radius: 14px; padding: 12px 10px; align-items: stretch; }
-  .combo-jo { flex: 0 0 22%; min-width: 0; }
+  .freq-table { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 10px 0 4px; }
+  .freq-cell { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 8px; padding: 5px 6px; }
+  .freq-n { font-weight: 800; font-size: 13px; }
+  .freq-n.y { color: var(--ball-y); } .freq-n.b { color: var(--ball-b); } .freq-n.r { color: var(--ball-r); }
+  .freq-n.gy { color: var(--ball-gy); } .freq-n.gr { color: var(--ball-gr); }
+  .freq-v { color: var(--text-secondary); font-size: 11.5px; }
+
+  .combo-card { display: flex; gap: 10px; background: var(--surface); border-radius: 14px; padding: 12px 10px; align-items: stretch; width: 90%; margin-inline: auto; }
+  .combo-jo { flex: 0 0 32%; min-width: 0; }
   .combo-jo .chart-svg { height: 100%; }
   .combo-digits { flex: 1; min-width: 0; }
 
@@ -281,11 +289,12 @@ function computeLottoStats(draws) {
 }
 
 function renderNumberBarChart(container, freqArr, ariaLabel) {
-  // 막대는 선 수준으로 가늘게. x축 숫자는 5개씩 계단식으로 내려갔다 다시 리셋.
-  const W = 440, H = 216, padTop = 18, padBottom = 76, barW = 1.6;
+  // 막대는 선 수준으로 가늘게. x축은 5,10,15...45 눈금만 표기하고, 45개 전체
+  // 숫자·횟수는 차트 아래 표로 따로 보여준다.
+  const W = 440, H = 170, padTop = 18, padBottom = 24, barW = 1.6;
   const n = 45;
   const gap = (W - n * barW) / (n - 1);
-  const stepH = 13, baseLabelY = H - padBottom + 14;
+  const TICKS = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45];
   let max = 1, peakIdx = 1;
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
@@ -294,32 +303,36 @@ function renderNumberBarChart(container, freqArr, ariaLabel) {
   }
   const plotH = H - padTop - padBottom;
   const bars = [];
-  const labels = [];
   for (let i = 1; i <= 45; i++) {
     const v = freqArr[i] || 0;
     const h = Math.max((v / max) * plotH, v > 0 ? 1.5 : 0);
     const x = (i - 1) * (barW + gap);
     const y = H - padBottom - h;
-    const cx = x + barW / 2;
     bars.push(`<rect class="bar ${ballClass(i)}" data-n="${i}" data-v="${v}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="0.8"/>`);
-    const posInGroup = (i - 1) % 5;
-    const labelY = baseLabelY + posInGroup * stepH;
-    labels.push(`<text class="axis-label-n" x="${cx.toFixed(2)}" y="${labelY.toFixed(2)}" text-anchor="middle">${i}</text>`);
   }
+  const labels = TICKS.map(i => {
+    const cx = (i - 1) * (barW + gap) + barW / 2;
+    return `<text class="axis-label-n" x="${cx.toFixed(2)}" y="${H - 6}" text-anchor="middle">${i}</text>`;
+  }).join('');
   const peakX = (peakIdx - 1) * (barW + gap) + barW / 2;
   const peakH = Math.max(((freqArr[peakIdx] || 0) / max) * plotH, 1.5);
   const peakY = Math.max(H - padBottom - peakH - 6, 10);
   const peakLabel = `<text class="peak-label" x="${peakX.toFixed(2)}" y="${peakY.toFixed(2)}" text-anchor="middle">${freqArr[peakIdx] || 0}회</text>`;
+
+  const tableCells = Array.from({ length: 45 }, (_, idx) => idx + 1).map(i =>
+    `<div class="freq-cell"><span class="freq-n ${ballClass(i)}">${i}</span><span class="freq-v">${freqArr[i] || 0}회</span></div>`
+  ).join('');
 
   container.innerHTML = `<div class="chart-wrap">
     <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${ariaLabel}">
       <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
       ${bars.join('')}
       ${peakLabel}
-      ${labels.join('')}
+      ${labels}
     </svg>
     <div class="chart-tooltip"></div>
-  </div>`;
+  </div>
+  <div class="freq-table">${tableCells}</div>`;
 
   const tip = container.querySelector('.chart-tooltip');
   const wrap = container.querySelector('.chart-wrap');
@@ -472,11 +485,14 @@ function rollPension(){
   renderPensionSets(generatePensionSets(strategy, count, stats));
 }
 
-function renderJoBarChart(container, joFreq){
-  // 자리별 타일과 높이를 맞추는 좁은 칸에 들어가므로 막대는 최대한 가늘게.
-  const W = 130, H = 86, padTop = 14, padBottom = 12;
+function renderJoBarChart(container, joFreq, boxW, boxH){
+  // viewBox를 실제 렌더 픽셀 크기에 최대한 맞춰서(1:1에 가깝게) 폰트가 의도한
+  // 크기로 나오게 한다 — viewBox가 실제 박스보다 훨씬 크면 축소되어 안 보임.
+  const W = Math.max(Math.round(boxW) || 72, 40);
+  const H = Math.max(Math.round(boxH) || 82, 60);
+  const padTop = Math.round(H * 0.19), padBottom = Math.round(H * 0.24);
   const slot = W / 5;
-  const barW = slot * 0.34;
+  const barW = slot * 0.42;
   const plotH = H - padTop - padBottom;
   const vals = [1,2,3,4,5].map(j => joFreq[j] || 0);
   const chartMax = Math.max(1, ...vals);
@@ -488,8 +504,8 @@ function renderJoBarChart(container, joFreq){
     const x = cx - barW / 2;
     const y = H - padBottom - h;
     parts.push(`<rect class="bar jo" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1"/>`);
-    parts.push(`<text class="bar-value" x="${cx.toFixed(1)}" y="${Math.max(y - 4, 9).toFixed(1)}" text-anchor="middle">${v}</text>`);
-    parts.push(`<text class="axis-label" x="${cx.toFixed(1)}" y="${H - 2}" text-anchor="middle">${j}</text>`);
+    parts.push(`<text class="bar-value" x="${cx.toFixed(1)}" y="${Math.max(y - 3, padTop - 4).toFixed(1)}" text-anchor="middle">${v}</text>`);
+    parts.push(`<text class="axis-label" x="${cx.toFixed(1)}" y="${H - 4}" text-anchor="middle">${j}조</text>`);
   }
   container.innerHTML = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="조별 1등 당첨 횟수">
     <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
@@ -499,6 +515,7 @@ function renderJoBarChart(container, joFreq){
 
 function renderPensionStats(){
   const stats = computePensionStats(state.pension);
+  state.lastJoFreq = stats.joFreq; // 탭 전환 시 실제 크기로 다시 그리기 위해 보관
   const wrap = document.getElementById('pensionDigitsWrap');
   const joChart = document.getElementById('pensionJoChart');
   if (!stats.total){
@@ -510,17 +527,23 @@ function renderPensionStats(){
     let best=0; for(let d=1;d<10;d++) if(freqs[d]>freqs[best]) best=d;
     return `<div class="digit-col"><div class="pos">${pos+1}번째</div><div class="val">${best}</div><div class="cnt">${freqs[best]}회</div></div>`;
   }).join('')}</div>`;
-  renderJoBarChart(joChart, stats.joFreq);
   syncJoChartHeight();
 }
 
 function syncJoChartHeight(){
-  // 연금 탭이 display:none인 상태(초기 로드 시 로또 탭이 기본)에서는 높이가 0으로 측정되므로,
-  // 탭이 실제로 보일 때(탭 전환 시점)도 다시 맞춰준다.
+  // 연금 탭이 display:none인 상태(초기 로드 시 로또 탭이 기본)에서는 크기가 0으로 측정되므로,
+  // 탭이 실제로 보일 때(탭 전환 시점)도 실제 픽셀 크기로 다시 그린다 — viewBox가 실제 크기와
+  // 다르면 폰트가 의도한 크기로 안 보이는 문제가 있었음.
   const wrap = document.getElementById('pensionDigitsWrap');
   const joChart = document.getElementById('pensionJoChart');
   const gridEl = wrap && wrap.querySelector('.digit-grid');
-  if (gridEl && gridEl.offsetHeight > 0) joChart.style.height = gridEl.offsetHeight + 'px';
+  if (!gridEl || !state.lastJoFreq) return;
+  const h = gridEl.offsetHeight;
+  const w = joChart.getBoundingClientRect().width;
+  if (h > 0 && w > 0) {
+    joChart.style.height = h + 'px';
+    renderJoBarChart(joChart, state.lastJoFreq, w, h);
+  }
 }
 
 /* ---------- 탭 전환 / 상단 요약 ---------- */
