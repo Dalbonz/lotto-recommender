@@ -1,4 +1,4 @@
-const CACHE = "lottery-app-v2";
+const CACHE = "lottery-app-v3";
 const ASSETS = ["./", "./index.html", "./manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -15,31 +15,16 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  const url = new URL(event.request.url);
-  const isData = url.pathname.includes("/data/");
 
-  if (isData) {
-    // 당첨번호 데이터는 항상 최신을 우선 시도, 실패 시 캐시로 폴백 (network-first)
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
-          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); }
-          return res;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
+  // 항상 네트워크를 먼저 시도해 최신 콘텐츠를 받고, 오프라인/실패 시에만 캐시로
+  // 폴백한다(network-first). 예전에는 앱 셸(HTML/JS)을 캐시 우선으로 서빙해서 배포
+  // 직후에도 새로고침 한 번으로는 새 버전이 안 보이는 문제가 있었다.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((res) => {
-          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(event.request, copy)); }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

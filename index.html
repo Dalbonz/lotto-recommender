@@ -123,25 +123,15 @@
   .note b { font-weight: 700; }
   .empty-note { font-size: 13px; color: var(--text-secondary); padding: 14px 16px; background: var(--surface); border-radius: 14px; line-height: 1.6; }
 
-  .stats-details { margin-top: 22px; }
-  .stats-details summary {
-    list-style: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent);
-    padding: 10px 2px; display: flex; align-items: center; gap: 6px; -webkit-tap-highlight-color: transparent;
-  }
-  .stats-details summary::-webkit-details-marker { display: none; }
-  .stats-details summary::before { content: '▸'; font-size: 11px; transition: transform .15s ease; }
-  .stats-details[open] summary::before { transform: rotate(90deg); }
-  .stats-details[open] summary { color: var(--text-secondary); }
-  .stats-details .section-label:first-of-type { margin-top: 4px; }
-
   .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; }
   .chart-wrap { position: relative; }
   .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
   .chart-svg .bar.y { fill: var(--ball-y); } .chart-svg .bar.b { fill: var(--ball-b); } .chart-svg .bar.r { fill: var(--ball-r); }
   .chart-svg .bar.gy { fill: var(--ball-gy); } .chart-svg .bar.gr { fill: var(--ball-gr); }
+  .chart-svg .bar.jo { fill: var(--pension); }
   .chart-svg .baseline { stroke: var(--border); stroke-width: 1; }
   .chart-svg .axis-label { font-size: 7.5px; fill: var(--text-secondary); font-family: inherit; }
-  .chart-svg .peak-label { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
+  .chart-svg .peak-label, .chart-svg .bar-value { font-size: 9px; font-weight: 700; fill: var(--text); font-family: inherit; }
   .chart-tooltip {
     position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
     font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; transform: translate(-50%,-100%);
@@ -189,24 +179,17 @@
     <button class="cta" id="lottoRoll" type="button">다시 뽑기</button>
     <div class="sets" id="lottoSets"></div>
 
-    <details class="stats-details">
-      <summary>과거 통계 더 보기 (참고용, 당첨 확률과 무관)</summary>
+    <div class="section-label">번호별 출현 횟수 (최근 100회)</div>
+    <div class="chart-card" id="lottoHotRecent"></div>
 
-      <div class="section-label">최근 100회 번호별 출현 횟수</div>
-      <div class="chart-card" id="lottoHotRecent"></div>
+    <div class="section-label">콜드넘버 (최장 미출현)</div>
+    <div class="group" id="lottoCold"></div>
 
-      <div class="section-label">전체 기간 번호별 출현 횟수</div>
-      <div class="chart-card" id="lottoHotAll"></div>
-
-      <div class="section-label">콜드넘버 (최장 미출현)</div>
-      <div class="group" id="lottoCold"></div>
-
-      <div class="section-label">참고 통계</div>
-      <div class="group">
-        <div class="row"><span class="label">번호 합계 주요 범위</span><span class="value" id="lottoSumRange">-</span></div>
-        <div class="row"><span class="label">연속번호 포함 비율</span><span class="value" id="lottoConsec">-</span></div>
-      </div>
-    </details>
+    <div class="section-label">참고 통계</div>
+    <div class="group">
+      <div class="row"><span class="label">번호 합계 주요 범위</span><span class="value" id="lottoSumRange">-</span></div>
+      <div class="row"><span class="label">연속번호 포함 비율</span><span class="value" id="lottoConsec">-</span></div>
+    </div>
   </section>
 
   <!-- 연금복권720+ -->
@@ -230,15 +213,11 @@
     <button class="cta" id="pensionRoll" type="button">다시 뽑기</button>
     <div class="sets" id="pensionSets"></div>
 
-    <details class="stats-details">
-      <summary>과거 통계 더 보기 (참고용, 당첨 확률과 무관)</summary>
+    <div class="section-label">자리별 최다 출현 숫자</div>
+    <div id="pensionDigitsWrap"><div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div></div>
 
-      <div class="section-label">자리별 최다 출현 숫자</div>
-      <div id="pensionDigitsWrap"><div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div></div>
-
-      <div class="section-label">조(組)별 출현 횟수</div>
-      <div class="group" id="pensionJoStats"></div>
-    </details>
+    <div class="section-label">조(組)별 1등 당첨 횟수</div>
+    <div class="chart-card" id="pensionJoChart"></div>
   </section>
 
   <div class="note">
@@ -411,7 +390,6 @@ function renderLottoStats(){
     ? `로또 최신 ${stats.latestRound}회(${stats.latestDate}) 분석 · 매주 목·토 자동 업데이트`
     : '데이터 없음';
   renderNumberBarChart(document.getElementById('lottoHotRecent'), stats.freqRecent, '최근 100회 번호별 출현 횟수');
-  renderNumberBarChart(document.getElementById('lottoHotAll'), stats.freq, '전체 기간 번호별 출현 횟수');
   renderBallRow(document.getElementById('lottoCold'), coldN(stats,10), '회차 전');
   document.getElementById('lottoSumRange').textContent = stats.total ? `${stats.sumLo} ~ ${stats.sumHi}` : '-';
   document.getElementById('lottoConsec').textContent = stats.total ? (stats.consecRatio*100).toFixed(1)+'%' : '-';
@@ -482,21 +460,42 @@ function rollPension(){
   renderPensionSets(generatePensionSets(strategy, count, stats));
 }
 
+function renderJoBarChart(container, joFreq){
+  const W = 300, H = 120, padTop = 22, padBottom = 20, gap = 14;
+  const vals = [1,2,3,4,5].map(j => joFreq[j] || 0);
+  const chartMax = Math.max(1, ...vals);
+  const barW = (W - gap * 4) / 5;
+  const plotH = H - padTop - padBottom;
+  const parts = [];
+  for (let j = 1; j <= 5; j++){
+    const v = joFreq[j] || 0;
+    const h = Math.max((v / chartMax) * plotH, v > 0 ? 2 : 0);
+    const x = (j - 1) * (barW + gap);
+    const y = H - padBottom - h;
+    parts.push(`<rect class="bar jo" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="4"/>`);
+    parts.push(`<text class="bar-value" x="${(x + barW/2).toFixed(1)}" y="${Math.max(y - 6, 11).toFixed(1)}" text-anchor="middle">${v}</text>`);
+    parts.push(`<text class="axis-label" x="${(x + barW/2).toFixed(1)}" y="${H - 4}" text-anchor="middle">${j}조</text>`);
+  }
+  container.innerHTML = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="조별 1등 당첨 횟수">
+    <line class="baseline" x1="0" y1="${H - padBottom}" x2="${W}" y2="${H - padBottom}"/>
+    ${parts.join('')}
+  </svg>`;
+}
+
 function renderPensionStats(){
   const stats = computePensionStats(state.pension);
   const wrap = document.getElementById('pensionDigitsWrap');
-  const joWrap = document.getElementById('pensionJoStats');
+  const joChart = document.getElementById('pensionJoChart');
   if (!stats.total){
     wrap.innerHTML = '<div class="empty-note" id="pensionEmptyNote">아직 자동 수집된 회차가 없습니다. 다음 자동 업데이트가 실행되면 여기에 통계가 표시됩니다.</div>';
-    joWrap.innerHTML = '<div class="row"><span class="label" style="color:var(--text-secondary);">데이터 없음</span></div>';
+    joChart.innerHTML = '<div class="empty-note">데이터 없음</div>';
     return;
   }
   wrap.innerHTML = `<div class="digit-grid">${stats.digitFreq.map((freqs,pos)=>{
     let best=0; for(let d=1;d<10;d++) if(freqs[d]>freqs[best]) best=d;
     return `<div class="digit-col"><div class="pos">${pos+1}번째</div><div class="val">${best}</div><div class="cnt">${freqs[best]}회</div></div>`;
   }).join('')}</div>`;
-  joWrap.innerHTML = [1,2,3,4,5].map(j=>`
-    <div class="row"><span class="label">${j}조</span><span class="value">${stats.joFreq[j]}회</span></div>`).join('');
+  renderJoBarChart(joChart, stats.joFreq);
 }
 
 /* ---------- 탭 전환 ---------- */
@@ -517,20 +516,18 @@ document.getElementById('lottoRoll').addEventListener('click', rollLotto);
 document.getElementById('pensionRoll').addEventListener('click', rollPension);
 
 async function boot(){
-  try {
-    const [lottoRes, pensionRes] = await Promise.all([
-      fetch('data/lotto645.json').then(r=>r.json()),
-      fetch('data/pension720.json').then(r=>r.json()),
-    ]);
-    state.lotto = lottoRes;
-    state.pension = pensionRes;
-  } catch(e) {
-    console.error('데이터 로딩 실패', e);
-  }
-  renderLottoStats();
-  renderPensionStats();
-  rollLotto();
-  rollPension();
+  // 두 데이터 요청을 서로 독립적으로 처리 — 하나가 실패해도 다른 하나(와 추천 번호 생성)는
+  // 항상 정상 동작해야 한다("다시 뽑기"를 누르지 않아도 무조건 5게임이 떠야 함).
+  await Promise.all([
+    fetch('data/lotto645.json').then(r=>r.json()).then(d=>{ state.lotto = d; })
+      .catch(e=>console.error('로또 데이터 로딩 실패', e)),
+    fetch('data/pension720.json').then(r=>r.json()).then(d=>{ state.pension = d; })
+      .catch(e=>console.error('연금복권 데이터 로딩 실패', e)),
+  ]);
+  try { renderLottoStats(); } catch(e){ console.error('로또 통계 렌더 실패', e); }
+  try { renderPensionStats(); } catch(e){ console.error('연금복권 통계 렌더 실패', e); }
+  try { rollLotto(); } catch(e){ console.error('로또 추천 생성 실패', e); }
+  try { rollPension(); } catch(e){ console.error('연금복권 추천 생성 실패', e); }
 }
 boot();
 
