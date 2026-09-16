@@ -65,7 +65,7 @@
     font-family: "SamsungOne", "Samsung One", "SamsungOneKorean", "SEC-Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", Inter, sans-serif;
     font-variant-numeric: tabular-nums;
   }
-  .wrap { max-width: 480px; margin: 0 auto; padding-inline: 5%; }
+  .wrap { max-width: 480px; margin: 0 auto; padding-inline: 16px; }
 
   h1.title { font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 2px; }
   .subtitle { color: var(--text-secondary); font-size: 13.5px; margin-bottom: 2px; }
@@ -88,7 +88,7 @@
   }
   .section-label:first-of-type { margin-top: 0; }
 
-  .group { background: var(--surface); border-radius: 14px; overflow: hidden; }
+  .group { background: var(--surface); border-radius: 14px; overflow: hidden; width: 90%; margin-inline: auto; }
   .row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
   .row:last-child { border-bottom: none; }
   .row .label { font-size: 15px; }
@@ -104,13 +104,13 @@
   .updated-line { color: var(--text-secondary); font-size: 11.5px; margin: 0 0 18px; }
 
   button.cta {
-    display: block; width: 100%; font-family: inherit; font-weight: 700; font-size: 16px; padding: 14px 16px;
+    display: block; width: 90%; margin-inline: auto; font-family: inherit; font-weight: 700; font-size: 16px; padding: 14px 16px;
     border-radius: 12px; border: none; background: var(--cta-bg); color: var(--cta-ink); cursor: pointer; margin-block: 14px 4px;
   }
   button.cta:active { opacity: .85; }
 
   .sets { display: flex; flex-direction: column; gap: 10px; }
-  .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; }
+  .set-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px; width: 90%; margin-inline: auto; }
   .set-idx { font-size: 12px; color: var(--text-secondary); width: 14px; flex-shrink: 0; font-weight: 600; }
   .balls { display: flex; justify-content: space-evenly; gap: 6px; flex-wrap: wrap; flex: 1; }
   .ball { width: 33px; height: 33px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14.5px; color: white; flex-shrink: 0; }
@@ -124,11 +124,11 @@
   .icon-btn { border: none; background: transparent; color: var(--text-secondary); font-size: 16px; width: 28px; height: 28px; cursor: pointer; flex-shrink: 0; }
   .icon-btn.copied { color: var(--ball-gr); }
 
-  .note { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); border-radius: 12px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; margin-top: 20px; }
+  .note { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); border-radius: 12px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; margin-top: 20px; width: 90%; margin-inline: auto; }
   .note b { font-weight: 700; }
   .empty-note { font-size: 13px; color: var(--text-secondary); padding: 14px 16px; background: var(--surface); border-radius: 14px; line-height: 1.6; }
 
-  .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; }
+  .chart-card { background: var(--surface); border-radius: 14px; padding: 14px 10px 6px; width: 90%; margin-inline: auto; }
   .chart-wrap { position: relative; height: 100%; }
   .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
   .chart-svg .bar.y { fill: var(--ball-y); } .chart-svg .bar.b { fill: var(--ball-b); } .chart-svg .bar.r { fill: var(--ball-r); }
@@ -152,7 +152,7 @@
   .freq-n.gy { color: var(--ball-gy); } .freq-n.gr { color: var(--ball-gr); }
   .freq-v { color: var(--text-secondary); font-size: 11.5px; }
 
-  .combo-card { display: flex; gap: 10px; background: var(--surface); border-radius: 14px; padding: 12px 10px; align-items: stretch; }
+  .combo-card { display: flex; gap: 10px; background: var(--surface); border-radius: 14px; padding: 12px 10px; align-items: stretch; width: 90%; margin-inline: auto; }
   .combo-jo { flex: 0 0 32%; min-width: 0; }
   .combo-jo .chart-svg { height: 100%; }
   .combo-digits { flex: 1; min-width: 0; }
@@ -163,7 +163,7 @@
   .digit-col .val { font-size: 26px; font-weight: 800; }
   .digit-col .cnt { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
-  footer { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; margin-top: 18px; }
+  footer { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; margin-top: 18px; width: 90%; margin-inline: auto; }
 </style>
 </head>
 <body>
