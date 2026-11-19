@@ -20,7 +20,7 @@ GitHub Actions가 매주 목요일·토요일 당첨 발표 직후 자동으로 
 │   ├── lotto645.json           # 로또 6/45 회차별 당첨번호
 │   └── pension720.json         # 연금복권720+ 회차별 당첨번호
 ├── scripts/
-│   ├── fetch_lotto645.py       # 동행복권 공식 JSON API로 로또 수집
+│   ├── fetch_lotto645.py       # 동행복권 내부 JSON API(selectPstLt645InfoNew.do)로 로또 수집
 │   └── fetch_win720.py         # 연금복권720+ 내부 JSON API(selectPstPt720WnList.do)로 수집
 └── .github/workflows/
     ├── update-data.yml         # 매주 목·토 추첨 직후 자동 실행: 당첨번호 수집 → 커밋
@@ -34,8 +34,12 @@ GitHub Actions가 매주 목요일·토요일 당첨 발표 직후 자동으로 
   - 로또 6/45 (토요일 20:35 KST 추첨) → 21:00 KST(UTC 12:00)
   - 두 실행 모두 로또·연금복권 스크립트를 함께 돌리므로(이미 최신 회차면 아무것도 하지 않고 건너뜀),
     추첨 발표가 예정보다 늦어져도 다음 실행이나 수동 실행(`workflow_dispatch`)으로 보완할 수 있습니다.
-- 로또 6/45는 동행복권이 공개한 JSON 조회 API(`common.do?method=getLottoNumber`)를 사용합니다.
-  이 API는 별도 키 없이 무료로 쓸 수 있는, 널리 알려진 공개 엔드포인트입니다.
+- 로또 6/45는 연금복권과 마찬가지로, 결과 화면이 내부적으로 호출하는 JSON API
+  (`/lt645/selectPstLt645InfoNew.do?srchLtEpsd={회차}`)를 직접 호출합니다. 예전에 쓰던
+  `common.do?method=getLottoNumber` 는 동행복권이 사이트를 개편하면서 폐기돼 지금은
+  JSON 대신 홈페이지 HTML을 돌려줍니다(그래서 2026-01분 1205회부터 데이터가 멈춰 있었습니다).
+  조회·파싱에 실패하면 그 사실을 stderr에 남기고 **종료코드 1로 끝나** Actions가 실패로
+  표시됩니다 — "새 회차가 없어서 조용히 지나간 것"과 구분하기 위해서입니다.
 - 연금복권720+는 결과 페이지가 자바스크립트로 그려지는 SPA라 정적 HTML만 받아서는
   당첨번호를 알 수 없습니다. 대신 그 페이지가 내부적으로 호출하는 JSON API
   (`/pt720/selectPstPt720WnList.do`)를 직접 호출합니다 — 별도 키 없이 1회 요청으로

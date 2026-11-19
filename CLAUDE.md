@@ -63,10 +63,11 @@
 ```
 index.html                     # 메인 앱 (Apple 스타일, 로또/연금복권 세그먼트 탭)
 manifest.json, sw.js, icons/   # PWA (아이콘은 One UI 스타일 커스텀 L 마크)
-data/lotto645.json             # 로또 1~1204회 시드 데이터 포함 (2025-12-27 기준)
+data/lotto645.json             # 로또 1~1250회 시드 데이터 포함 (2026-11-14 기준)
 data/pension720.json           # 연금복권 1~332회 백필 완료. 항목: round/date/group(1~5)/number(6자리)/bonusNumber(6자리)
-scripts/fetch_lotto645.py      # 동행복권 공식 공개 JSON API 사용. 2026-09-15까지 "회차 없음 vs
-                                # 조회 실패" 구분 버그로 1204회에서 멈춰 있었음(수정함, 백필 미검증)
+scripts/fetch_lotto645.py      # 동행복권 내부 JSON API(/lt645/selectPstLt645InfoNew.do) 사용.
+                                # 2026-11-20에 엔드포인트 교체 + 실패 시 exit 1 로 고침,
+                                # 1205~1250회(46회차) 백필 완료(공식 사이트·언론 보도와 대조 검증)
 scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.do) 사용, 검증 완료(Actions 로그 확인)
 .github/workflows/update-data.yml   # 목 19:00 KST + 토 21:00 KST(각 추첨 직후) + 수동실행. 데이터 수집 후 자체 배포까지 함
 .github/workflows/deploy-pages.yml  # main에 push되면 배포 (코드만 바뀔 때용, 데이터 워크플로우와 중복 가능)
@@ -89,6 +90,15 @@ scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.
   보고 실제로 새 회차가 잡히는지, 여전히 "조회 실패"만 찍히는지 확인할 것. 이 교훈:
   "에러 없이 실행됨"과 "실제로 올바르게 동작함"은 다르다 — 로그에 에러가 없다고
   곧바로 "검증됨"이라고 쓰지 말 것.
+- **2026-11-20 해결됨(엔드포인트 교체).** 위 "조회 실패"의 진짜 원인은 재시도 로직이
+  아니라 동행복권이 `common.do?method=getLottoNumber` 를 폐기한 것이었다 — 그 URL은
+  이제 JSON 대신 302로 홈페이지 HTML을 돌려준다(Actions 로그에 `Expecting value:
+  line 9 column 1`). 그래서 `fetch_lotto645.py`가 결과 화면이 실제로 호출하는
+  `/lt645/selectPstLt645InfoNew.do?srchLtEpsd={회차}` 를 쓰도록 바꾼다. 이 API는
+  요청 회차를 중심으로 최대 10회차를 내려주고, 아직 추첨 안 된 회차면 `data.list` 가
+  빈 배열로 온다(조회 실패와 구분됨). 조회·파싱 실패 시에는 `exit 1` 로 끝나 워크플로가
+  실패로 표시된다. 1205~1250회(46회차)를 실제로 받아 1·500·1000·1204회 기존 값과
+  대조했고, 1250회·1230회는 연합뉴스 등 보도와도 일치함을 확인했다.
   두 API 모두 동행복권이 공식 문서화한 게 아니라 사이트가 내부적으로 쓰는 엔드포인트를
   그대로 가져다 쓰는 것이므로, 동행복권이 API를 바꾸면 예고 없이 깨질 수 있다.
 - **Codespace 자체 네트워크가 dhlottery.co.kr에 간헐적으로 타임아웃 나는 걸 관찰함**
@@ -100,11 +110,11 @@ scripts/fetch_win720.py        # 비공식 JSON API(/pt720/selectPstPt720WnList.
 
 ## 다음에 할 일
 
-1. **최우선**: `update-data.yml`을 Actions 탭에서 수동 실행하고 `[lotto645]` 로그를
-   확인할 것 — 2026-09-15에 고친 재시도 로직으로 1204회 이후 밀린 회차(실제 최신은
-   대략 1240회 근처로 추정됨, 직접 확인 필요)가 실제로 채워지는지 검증 안 됨. 여전히
-   "조회 실패"만 찍히면 dhlottery의 `common.do` 엔드포인트 자체가 바뀌었을 가능성이
-   있으므로(win720처럼) 실제 페이지 구조를 다시 확인해야 함.
+1. ~~`update-data.yml`을 수동 실행해 1204회 이후 밀린 회차가 채워지는지 확인~~ →
+   **2026-11-20 완료.** 원인은 `common.do` 엔드포인트 폐기였고, `selectPstLt645InfoNew.do`
+   로 교체해 1205~1250회를 채웠다. 이제 새 회차가 생기면 매주 자동으로 이어받고,
+   실패하면 워크플로가 빨갛게 보인다. 다음 세션은 토요일 실행 후 `[lotto645]` 로그에
+   새 회차가 찍히는지만 확인하면 된다.
 2. `data/lotto645.json`의 1~1004회차 날짜 중 일부(824건)가 `2002-12-7`처럼 0패딩
    안 된 형식임(`2002-12-07`이어야 함). 화면 표시에는 문제 없지만(Date로 파싱 안 함)
    데이터 형식 통일이 필요하면 정리할 것 — 과거 시드 데이터라 지금까지는 안 건드림.

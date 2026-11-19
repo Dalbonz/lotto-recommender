@@ -1,18 +1,51 @@
 """
 로또 6/45 당첨번호 자동 업데이트.
-동행복권 공식 조회 API(common.do?method=getLottoNumber)를 사용한다.
-이 API는 비공식적으로 널리 쓰이는 공개 엔드포인트로, 별도 인증(API 키) 없이 무료로 호출 가능하다.
+
+동행복권이 2026년에 사이트를 SPA(자바스크립트 렌더링)로 개편하면서 예전에 쓰던
+`common.do?method=getLottoNumber&drwNo=N` 은 폐기됐다. 그 URL은 이제 JSON 대신
+302로 홈페이지 HTML을 돌려주기 때문에, 이 스크립트는 몇 달 동안 매 실행마다
+파싱에 실패하면서도 "새 회차 없음"처럼 조용히 지나갔다(1205회부터 누락).
+
+그래서 결과 화면(`/lt645/result`)이 실제로 호출하는 JSON 엔드포인트를 직접 쓴다:
+
+    GET https://www.dhlottery.co.kr/lt645/selectPstLt645InfoNew.do?srchLtEpsd={회차}
+
+응답(200, application/json):
+    {"data": {"list": [
+        {"ltEpsd": 1250, "tm1WnNo": 1, ..., "tm6WnNo": 28, "bnsWnNo": 8,
+         "ltRflYmd": "20261114", ...}, ...
+    ]}}
+
+- 요청 회차를 중심으로 최대 10회차(요청-5 ~ 요청+4)를 내려준다.
+- 요청 회차가 아직 추첨되지 않았으면 `list`가 빈 배열로 온다(그게 "다음 회차 없음").
+- 쿠키나 리퍼러 없이 호출된다. (같은 형제 엔드포인트 `/pt720/selectPstPt720WnList.do`를
+  쓰는 `fetch_win720.py`도 GitHub Actions 러너에서 정상 동작 중이다.)
+
+조회·파싱 자체가 실패하면 재시도 후 **exit 1** 로 끝나 워크플로가 빨갛게 보이게 한다.
+"아직 추첨되지 않음"과 "가져오지 못함"을 구분하는 것이 이 스크립트의 핵심이다.
 """
 import json
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "lotto645.json"
 META_PATH = Path(__file__).resolve().parent.parent / "data" / "updated.json"
-API_URL = "https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={round}"
+API_URL = "https://www.dhlottery.co.kr/lt645/selectPstLt645InfoNew.do?srchLtEpsd={round}"
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+    ),
+    "Accept": "application/json",
+}
+
+
+class FetchError(RuntimeError):
+    """조회 실패(네트워크/HTTP/파싱). "아직 추첨 안 됨"과는 다른 상태."""
 
 
 def touch_updated(key: str):
@@ -32,78 +65,104 @@ def load_existing() -> list:
     return json.loads(DATA_PATH.read_text(encoding="utf-8"))
 
 
-def fetch_round(round_no: int, retries: int = 3) -> dict | None:
-    """1회차를 조회한다. 네트워크/파싱 오류는 일시적일 수 있으므로 재시도하고,
-    재시도를 모두 소진해도 실패하면 예외를 던진다(= "이 회차가 아직 없다"와는
-    구분되는 상태). 서버가 정상 JSON으로 실패를 응답한 경우에만 None을 반환한다
-    ("아직 추첨되지 않은 회차"라는 뜻).
+def _to_row(item: dict) -> dict:
+    """API 항목 하나를 저장 포맷으로 바꾸고 값이 말이 되는지 검사한다."""
+    try:
+        rnd = int(item["ltEpsd"])
+        numbers = sorted(int(item[f"tm{i}WnNo"]) for i in range(1, 7))
+        bonus = int(item["bnsWnNo"])
+        ymd = str(item["ltRflYmd"])
+    except (KeyError, TypeError, ValueError) as e:
+        raise FetchError(f"응답 항목에 필요한 값이 없거나 형식이 다름: {item!r} ({e})") from e
 
-    이전 버전은 이 두 경우(진짜로 다음 회차가 없음 vs. 요청 자체가 실패함)를
-    구분하지 않고 모든 예외를 "다음 회차 없음"으로 취급했다 — 그래서 API가
-    빈 응답(공백만 있는 응답)을 반환하는 문제가 생겨도 조용히 "새 회차 없음"으로
-    잘못 보고되고, 실제로는 몇 달치 회차가 누락되는데도 알아챌 방법이 없었다.
-    """
+    if len(ymd) != 8 or not ymd.isdigit():
+        raise FetchError(f"{rnd}회 날짜 형식이 예상과 다름: {ymd!r}")
+    date = f"{ymd[0:4]}-{ymd[4:6]}-{ymd[6:8]}"
+
+    if len(set(numbers)) != 6 or not all(1 <= n <= 45 for n in numbers):
+        raise FetchError(f"{rnd}회 당첨번호가 이상함: {numbers}")
+    if not 1 <= bonus <= 45:
+        raise FetchError(f"{rnd}회 보너스번호가 이상함: {bonus}")
+
+    return {"round": rnd, "date": date, "numbers": numbers, "bonus": bonus}
+
+
+def fetch_window(round_no: int, retries: int = 3) -> list:
+    """요청 회차 주변의 회차 목록을 가져온다. 실패하면 FetchError."""
     last_err = None
     for attempt in range(1, retries + 1):
-        req = urllib.request.Request(
-            API_URL.format(round=round_no),
-            headers={
-                "User-Agent": "Mozilla/5.0",
-                "X-Requested-With": "XMLHttpRequest",
-                "Accept": "application/json",
-            },
-        )
+        req = urllib.request.Request(API_URL.format(round=round_no), headers=HEADERS)
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=20) as resp:
                 raw = resp.read().decode("utf-8")
-            data = json.loads(raw)
-        except Exception as e:
+            payload = json.loads(raw)
+            items = payload["data"]["list"]
+            if not isinstance(items, list):
+                raise ValueError(f"list 가 배열이 아님: {type(items)}")
+            return items
+        except Exception as e:  # HTTP/네트워크/JSON/구조 오류를 모두 포함
             last_err = e
             if attempt < retries:
-                time.sleep(1.5 * attempt)
+                time.sleep(2.0 * attempt)
                 continue
-            raise RuntimeError(
-                f"{retries}회 재시도했지만 유효한 응답을 받지 못함 (마지막 오류: {e})"
+            raise FetchError(
+                f"{round_no}회 조회 실패 — {retries}회 재시도 후에도 유효한 응답을 받지 못함 "
+                f"(마지막 오류: {type(e).__name__}: {e})"
             ) from e
-        else:
-            break
+    raise FetchError(f"{round_no}회 조회 실패 (마지막 오류: {last_err})")
 
-    if data.get("returnValue") != "success":
+
+def get_draw(round_no: int):
+    """해당 회차를 반환한다. 아직 추첨되지 않았으면 None, 조회 실패면 FetchError."""
+    items = fetch_window(round_no)
+    for item in items:
+        if int(item.get("ltEpsd", -1)) == round_no:
+            return _to_row(item)
+    rounds = [int(i.get("ltEpsd", 0)) for i in items]
+    if rounds and max(rounds) < round_no:
+        # 창이 최신 회차에서 잘린 경우 = 요청 회차는 아직 추첨되지 않음
         return None
-    return {
-        "round": data["drwNo"],
-        "date": data["drwNoDate"],
-        "numbers": sorted(
-            [data["drwtNo1"], data["drwtNo2"], data["drwtNo3"],
-             data["drwtNo4"], data["drwtNo5"], data["drwtNo6"]]
-        ),
-        "bonus": data["bnusNo"],
-    }
+    if rounds:
+        raise FetchError(
+            f"{round_no}회를 요청했는데 응답에 없고 더 최신 회차는 있음 "
+            f"(받은 회차: {sorted(rounds)}). API 응답 형식이 바뀌었는지 확인 필요."
+        )
+    # 빈 배열 = 요청 회차가 아직 추첨되지 않음
+    return None
 
 
-def main():
+def main() -> int:
     existing = load_existing()
     last_round = existing[-1]["round"] if existing else 0
     print(f"[lotto645] 현재 저장된 마지막 회차: {last_round}")
 
-    round_no = last_round + 1
     new_rows = []
-    fetch_failed = False
-    while True:
-        try:
-            row = fetch_round(round_no)
-        except Exception as e:
-            # 이 회차가 "아직 없어서"가 아니라 요청 자체가 실패한 것이므로,
-            # "새 회차 없음"과 혼동되지 않도록 명확히 오류로 로그를 남긴다.
-            print(f"[lotto645] {round_no}회 조회 실패(네트워크/파싱 오류): {e}", file=sys.stderr)
-            fetch_failed = True
-            break
-        if row is None:
-            break
-        new_rows.append(row)
-        print(f"[lotto645] {round_no}회 ({row['date']}) 수신")
-        round_no += 1
-        time.sleep(0.3)
+    round_no = last_round + 1
+    try:
+        while True:
+            row = get_draw(round_no)
+            if row is None:
+                print(f"[lotto645] {round_no}회는 아직 추첨되지 않음 (이미 최신)")
+                break
+            new_rows.append(row)
+            print(f"[lotto645] {round_no}회 ({row['date']}) 수신")
+            round_no += 1
+            time.sleep(0.3)
+    except FetchError as e:
+        # 일부라도 받았으면 저장은 해 둔다(다음 실행이 이어받도록).
+        if new_rows:
+            existing.extend(new_rows)
+            DATA_PATH.write_text(
+                json.dumps(existing, ensure_ascii=False, separators=(",", ":")),
+                encoding="utf-8",
+            )
+        print(f"[lotto645] 오류: {e}", file=sys.stderr)
+        print(
+            "[lotto645] 조회에 실패했습니다. '새 회차 없음'이 아니라 '확인하지 못함' 상태이므로 "
+            "워크플로를 실패로 끝냅니다.",
+            file=sys.stderr,
+        )
+        return 1
 
     if new_rows:
         existing.extend(new_rows)
@@ -112,28 +171,12 @@ def main():
             encoding="utf-8",
         )
         print(f"[lotto645] {len(new_rows)}개 회차 추가 저장 (최신 {existing[-1]['round']}회)")
-        if fetch_failed:
-            print(
-                f"[lotto645] {round_no}회부터는 조회가 실패해서 중단함 "
-                "(더 새 회차가 있는지는 다음 실행에서 재확인됨)",
-                file=sys.stderr,
-            )
-    elif fetch_failed:
-        print(
-            "[lotto645] 회차 조회가 실패해서 최신 여부를 확인하지 못함 "
-            "(진짜로 새 회차가 없는 것인지 알 수 없음 — 다음 실행에서 재시도됨)",
-            file=sys.stderr,
-        )
     else:
         print("[lotto645] 새 회차 없음 (이미 최신)")
 
-    # 새 회차를 하나도 못 구한 채로 조회 자체가 실패한 경우에만 "확인 시각"을
-    # 갱신하지 않는다 — 갱신해버리면 실제로는 최신 여부를 확인하지 못했는데도
-    # 확인된 것처럼 보이게 되기 때문이다. 일부라도 새 회차를 저장했다면(부분
-    # 성공) 그 시점까지는 실제로 갱신됐으므로 시각을 남긴다.
-    if new_rows or not fetch_failed:
-        touch_updated("lotto645")
+    touch_updated("lotto645")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
